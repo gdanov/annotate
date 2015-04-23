@@ -12,7 +12,7 @@ Type annotations and optional validation for functions. Can also be used to vali
 
 ## API Documentation
 
-http://roomkey.github.io/rk-annotate
+http://roomkey.github.io/annotate
 
 ## Presentation
 
