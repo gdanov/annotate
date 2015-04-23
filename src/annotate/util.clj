@@ -1,8 +1,8 @@
 (ns annotate.util)
 
 (defn lookup
-  "Lookup system property, returning a default value
-  if the property cannot be found."
+  "Lookup system property, returning a default value if the property
+  cannot be found."
   [prop default]
   (or (System/getProperty prop) default))
 
@@ -52,8 +52,8 @@
         :else x))
 
 (defn parse-arglist
-  "Takes a vector with inputs and output types
-  separated by =>.  For example,
+  "Takes a vector with inputs and output types separated by =>. For
+  example,
 
   [String => String]
 

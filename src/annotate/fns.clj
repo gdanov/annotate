@@ -4,9 +4,8 @@
   (:use [annotate core util]))
 
 (defn- add-validation
-  "Add validation to a fn definition by replacing
-  the params binding vector and wrapping the body with
-  validation code."
+  "Add validation to a fn definition by replacing the params binding
+  vector and wrapping the body with validation code."
   [n [input-types output-type] params body cond-sym]
   (let [input-syms
         (map (fn [x] (if (= x '&) x (gensym "input")))
@@ -40,8 +39,8 @@
         output#))))
 
 (defn- defn*
-  "Define a function with validation, add type annotation,
-  and preserve expected arglists.  Returns the new var."
+  "Define a function with validation, add type annotation, and preserve
+  expected arglists.  Returns the new var."
   [n t args cond-sym]
   (let [[doc-string attr-map params & body :as pb] (parse-doc-attr-map args)
         params-body (drop 2 pb)
@@ -63,21 +62,19 @@
        (var ~n))))
 
 (defmacro defn'
-  "Define a function, passing the type annotation
-  after the name of the function. Type annotations
-  for fns must be wrapped in vectors or lists. Lists
-  indicate a multi-arty fn and should contain two
-  or more vector forms. Enable validation by calling
-  inside the with-validation macro. Pre/post conditions
-  are removed."
+  "Define a function, passing the type annotation after the name of the
+  function. Type annotations for fns must be wrapped in vectors or
+  lists. Lists indicate a multi-arty fn and should contain two or more
+  vector forms. Enable validation by calling inside the with-validation
+  macro. Pre/post conditions are removed."
   [n t & args]
   (defn* n t args 'annotate.core/*validation-enabled*))
 
 (defmacro defna
   "Define annotated function.
 
-  Like defn', but without validation. Source code
-  is not modified in any way."
+  Like defn', but without validation. Source code is not modified in any
+  way."
   [n t & args]
   `(do
      (defn ~n ~@args)
@@ -93,13 +90,13 @@
   (defn* n t args true))
 
 (defmacro defn$
-  "Define a function, passing the type annotation after the
-  name of the function. Type annotations for fns must be wrapped
-  in vectors or lists. Lists indicate a multi-arty fn and should
-  contain two or more vector forms. Set the system property
-  annotate.typecheck to 'on' to generate an always validated
-  function, or to 'off' to generate an annotated only function.
-  Defaults to 'off'. Pre/post conditions are removed."
+  "Define a function, passing the type annotation after the name of the
+  function. Type annotations for fns must be wrapped in vectors or
+  lists. Lists indicate a multi-arty fn and should contain two or more
+  vector forms. Set the system property annotate.typecheck to 'on' to
+  generate an always validated function, or to 'off' to generate an
+  annotated only function.  Defaults to 'off'. Pre/post conditions are
+  removed."
   [n t & args]
   (if (typecheck?)
     `(defnv ~n ~t ~@args)
@@ -114,8 +111,8 @@
       `(defna ~n ~t ~@args))))
 
 (defn- fn-internal
-  "Define a function with validation, add type annotation,
-  and preserve expected arglists.  Returns the new var."
+  "Define a function with validation, add type annotation, and preserve
+  expected arglists.  Returns the new var."
   [n t args cond-sym]
   (let [[params & body] args
         fn-name (if n `'~n "anonymous")
@@ -130,10 +127,10 @@
       `(fn ~@b))))
 
 (defmacro fn'
-  "Define a function, passing the type annotation after
-  the optional name of the anonymous function. Type annotations
-  for fns must be wrapped in vectors or lists. Lists indicate
-  a multi-arty fn and should contain two or more vector forms."
+  "Define a function, passing the type annotation after the optional
+  name of the anonymous function. Type annotations for fns must be
+  wrapped in vectors or lists. Lists indicate a multi-arty fn and should
+  contain two or more vector forms."
   [n-or-t & args]
   (let [[n t args] (parse-fn-args n-or-t args)]
     (fn-internal n t args 'annotate.core/*validation-enabled*)))
@@ -141,8 +138,8 @@
 (defmacro fna
   "Define annotated anonymous function.
 
-  Like fn', but without validation. Source code
-  is not modified in any way."
+  Like fn', but without validation. Source code is not modified in any
+  way."
   [n-or-t & args]
   (let [[n t args] (parse-fn-args n-or-t args)]
     (if n
@@ -158,13 +155,13 @@
     (fn-internal n t args true)))
 
 (defmacro fn$
-  "Define a function, passing the type annotation after
-  the optional name of the anonymous function. Type annotations
-  for fns must be wrapped in vectors or lists. Lists indicate
-  a multi-arty fn and should contain two or more vector forms.
-  Set the system property annotate.typecheck to 'on' to generate
-  an always validated function, or to 'off' to generate an annotated
-  only function.  Defaults to 'off'."
+  "Define a function, passing the type annotation after the optional
+  name of the anonymous function. Type annotations for fns must be
+  wrapped in vectors or lists. Lists indicate a multi-arty fn and should
+  contain two or more vector forms.  Set the system property
+  annotate.typecheck to 'on' to generate an always validated function,
+  or to 'off' to generate an annotated only function.  Defaults to
+  'off'."
   [n-or-t & args]
   (if (typecheck?)
     `(fnv ~n-or-t ~@args)
