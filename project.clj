@@ -10,4 +10,5 @@
                              [lein-gorilla "0.3.4"]]
                    :codox {:src-dir-uri "https://github.com/roomkey/annotate/blob/master/"
                            :src-linenum-anchor-prefix "L"
-                           :output-dir "."}}})
+                           :output-dir "."
+                           :exclude [annotate.examples]}}})
