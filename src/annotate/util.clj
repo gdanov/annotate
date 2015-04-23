@@ -10,8 +10,10 @@
   (-> x .getClass .isArray))
 
 (defn fq-ns [v]
-  (let [m (meta v)]
-    (symbol (str (:ns m) "/" (:name m)))))
+  (let [{:keys [ns name]} (meta v)]
+    (if (= (ns-name ns) 'clojure.core)
+      name
+      (symbol (str ns "/" name)))))
 
 (declare truncate)
 

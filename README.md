@@ -116,6 +116,15 @@ Basics
 
 (validate (Pred empty?) [1])
 ; (not (empty? [1]))
+
+(validate (NilableColl) [1 2 3])
+; nil
+
+(validate (NilableColl) nil)
+; nil
+
+(validate (NilableColl) "Billy")
+; (and (not (coll? "Billy")) (not (nil? "Billy")))
 ```
 
 Functions
@@ -178,7 +187,8 @@ Functions
 
 ; Higher order fns
 (defn' map* [Fn (CanSeq) => (LazySeq)]
-  [f coll] (map f coll))
+  [f coll]
+  (map f coll))
 
 (with-validation (map* inc (range 5)))
 ; (1 2 3 4 5)
@@ -238,7 +248,7 @@ Wrap an existing function outside your control
 ; "url: localhost, method: POST, timeout: "
 
 (with-validation (ping "localhost" :timeout 100.0))
-; Exceptioninfo Failed to type check ping input(s): {:timeout (not (clojure.core/integer? 100.0))}
+; Exceptioninfo Failed to type check ping input(s): {:timeout (not (integer? 100.0))}
 ```
 
 Friendly errors

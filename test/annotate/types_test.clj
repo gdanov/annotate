@@ -2,13 +2,13 @@
   (:use [annotate core types] midje.sweet))
 
 (facts "Pred"
-  (fact (display-type (Pred even?)) => (list 'Pred 'clojure.core/even?))
+  (fact (display-type (Pred even?)) => (list 'Pred 'even?))
   (fact (validate (Pred even?) 2) => nil)
-  (fact (validate (Pred even?) 3) => (list 'not (list 'clojure.core/even? 3)))
+  (fact (validate (Pred even?) 3) => (list 'not (list 'even? 3)))
   (fact (validate (Pred (fn [x] (> x 0))) -1) =>
     (list 'not (list (list 'fn ['x] (list '> 'x 0)) -1)))
   (fact (validate (Pred :age) {:age 36}) =>
-    (list 'not (list 'valid-type? (list 'Pred :age)))))
+    (list 'not (list 'annotate.core/valid-type? (list 'Pred :age)))))
 (facts "fixed-key?"
   (fact (fixed-key? :hi) => true)
   (fact (fixed-key? (quote hi)) => true)
@@ -18,21 +18,21 @@
   (fact (fixed-key? String) => false))
 (facts "Union"
   (fact (display-type (U String Number)) => (list 'U 'String 'Number))
-  (fact (validate (U) "Billy") => (list 'not (list 'valid-type? (list 'U))))
+  (fact (validate (U) "Billy") => (list 'not (list 'annotate.core/valid-type? (list 'U))))
   (fact (validate (U (Pred list?) (Pred class?)) (list 1)) => nil)
   (fact (validate (U (Pred vector?) (Pred class?)) (list 1)) =>
     (list
      'and
-     (list 'not (list 'clojure.core/vector? (list 1)))
-     (list 'not (list 'clojure.core/class? (list 1)))))
+     (list 'not (list 'vector? (list 1)))
+     (list 'not (list 'class? (list 1)))))
   (fact (validate (U nil 3 String) 3) => nil))
 (facts "Intersection"
   (fact (display-type (I Number (Pred even?))) =>
-    (list 'I 'Number (list 'Pred 'clojure.core/even?)))
-  (fact (validate (I) 39) => (list 'not (list 'valid-type? (list 'I))))
+    (list 'I 'Number (list 'Pred 'even?)))
+  (fact (validate (I) 39) => (list 'not (list 'annotate.core/valid-type? (list 'I))))
   (fact (validate (I (Pred list?) (Pred seq?)) (quote (1))) => nil)
   (fact (validate (I (Pred list?) (Pred empty?)) (quote (1))) =>
-    (list 'not (list 'clojure.core/empty? (list 1)))))
+    (list 'not (list 'empty? (list 1)))))
 (facts "Eq"
   (fact (display-type (Eq [true])) => (list 'Eq [true]))
   (fact (validate (Eq [:success]) [:success]) => nil)
@@ -57,15 +57,11 @@
   (fact (validate {(optional-key :a) String} {:b "hi"}) => nil)
   (fact (validate {(optional-key :a) String} {:b "hi", :a "there"}) => nil)
   (fact (validate {:name String, String String} {:name "Bob"}) =>
-    (list
-     'not
-     (list
-      'valid-type?
-      {java.lang.String java.lang.String, :name java.lang.String}))))
+    (list 'not (list 'annotate.core/valid-type? {:name 'String, 'String 'String}))))
 (facts "Vectors"
   (fact (display-type [String]) => ['String])
   (fact (validate [] []) => nil)
-  (fact (validate [] #{}) => (list 'not (list 'clojure.core/vector? #{})))
+  (fact (validate [] #{}) => (list 'not (list 'vector? #{})))
   (fact (validate [String] []) => nil)
   (fact (validate [String] ["hi"]) => nil)
   (fact (validate [String] [:hi]) => [(list 'not (list 'instance? 'String :hi))])
@@ -78,7 +74,7 @@
 (facts "Lists"
   (fact (display-type (list String)) => (list 'String))
   (fact (validate (list) (list)) => nil)
-  (fact (validate (list) #{}) => (list 'not (list 'clojure.core/list? #{})))
+  (fact (validate (list) #{}) => (list 'not (list 'list? #{})))
   (fact (validate (list String) (list)) => nil)
   (fact (validate (list String) (list "hi")) => nil)
   (fact (validate (list String) (list :hi)) =>
@@ -96,7 +92,7 @@
   (fact (validate #{String} #{"hi" :there}) =>
     #{nil (list 'not (list 'instance? 'String :there))})
   (fact (validate #{String Keyword} #{:hi}) =>
-    (list 'not (list 'valid-type? #{'Keyword 'String}))))
+    (list 'not (list 'annotate.core/valid-type? #{'Keyword 'String}))))
 (facts "Regular Expressions"
   (fact (validate #"[a-z]+" "hi") => nil)
   (fact (validate #"[a-z]+" "hi3") => (comp not nil?)))
@@ -114,13 +110,13 @@
   (fact (display-type (NonEmpty [String])) => (list 'NonEmpty ['String]))
   (fact (validate (NonEmpty) ["Billy" "Bobby"]) => nil)
   (fact (validate (NonEmpty [String]) ["Billy" "Bobby"]) => nil)
-  (fact (validate (NonEmpty) []) => (list 'not (list 'clojure.core/seq []))))
+  (fact (validate (NonEmpty) []) => (list 'not (list 'seq []))))
 (facts "Empty"
   (fact (display-type (Empty Vec)) => (list 'Empty 'Vec))
   (fact (validate (Empty) []) => nil)
   (fact (validate (Empty Vec) []) => nil)
   (fact (validate (Empty) [1 2 3]) =>
-    (list 'not (list 'clojure.core/empty? [1 2 3]))))
+    (list 'not (list 'empty? [1 2 3]))))
 (facts "Option"
   (fact (display-type (Option String)) => (list 'Option 'String))
   (fact (validate (Option String) "hi") => nil)
@@ -163,8 +159,8 @@
   (fact (display-type (Coll Int)) => (list 'Coll 'Int))
   (fact (validate (Coll String) ["Billy" "Bobby"]) => nil)
   (fact (validate (Coll String) (list "Billy" "Bobby")) => nil)
-  (fact (validate (Coll Int) 3) => (list 'not (list 'clojure.core/coll? 3)))
-  (fact (validate (Coll Int) nil) => (list 'not (list 'clojure.core/coll? nil))))
+  (fact (validate (Coll Int) 3) => (list 'not (list 'coll? 3)))
+  (fact (validate (Coll Int) nil) => (list 'not (list 'coll? nil))))
 (facts "Seq"
   (fact (display-type (Seq Int)) => (list 'Seq 'Int))
   (fact (validate (Seq) (range 5)) => nil)
@@ -177,7 +173,7 @@
      (list 'not (list 'instance? 'String 2))
      (list 'not (list 'instance? 'String 3))
      (list 'not (list 'instance? 'String 4))))
-  (fact (validate (Seq) []) => (list 'not (list 'clojure.core/seq? []))))
+  (fact (validate (Seq) []) => (list 'not (list 'seq? []))))
 (facts "LazySeq"
   (fact (display-type (LazySeq Int)) => (list 'LazySeq 'Int))
   (fact (validate (LazySeq) (range 5)) => nil)
@@ -244,7 +240,7 @@
   (fact (validate (KwA :method Named :timeout Int) {:timeout 50.0}) =>
     (list
      'and
-     {:timeout (list 'not (list 'clojure.core/integer? 50.0))}
+     {:timeout (list 'not (list 'integer? 50.0))}
      (list 'not (list 'nil? {:timeout 50.0})))))
 (facts "Pairs"
   (fact (display-type (Pairs :method Named :timeout Int)) =>
@@ -254,7 +250,7 @@
   (fact (validate (Pairs :method Named :timeout Int) (list :timeout 50 :method "POST" :redirects 3)) =>
     nil)
   (fact (validate (Pairs :method Named :timeout Int) (list :timeout "50")) =>
-    {:timeout (list 'not (list 'clojure.core/integer? "50"))})
+    {:timeout (list 'not (list 'integer? "50"))})
   (fact (validate (Pairs :method Named :timeout Int) (list)) => nil))
 (facts "Subset"
   (fact (display-type (Subset #{:warn :error})) => (list 'Subset #{:warn :error}))

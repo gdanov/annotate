@@ -8,7 +8,7 @@
             IPersistentCollection Var]))
 
 (defn- not-valid-type [t]
-  `(~'not (~'valid-type? ~(display-type t))))
+  `(~'not (valid-type? ~(display-type t))))
 
 (defrecord PredicateType [pred-sym pred]
   Typeable
@@ -171,7 +171,7 @@
                  this)))
   (validate [this that]
     (if-not (valid-type? this)
-      `(~'not (~'valid-type? ~this))
+      (not-valid-type this)
       (if-not (map? that)
         `(~'not (~'map? ~(truncate that)))
         (let [kv-pairs (sort-map-by-keys this)

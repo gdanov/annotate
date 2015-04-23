@@ -36,7 +36,7 @@
   (fact (with-validation (ping "localhost" :method :POST :timeout 100.0)) =>
     (throws
      clojure.lang.ExceptionInfo
-     "Failed to type check annotate.examples/ping input(s): (and {:timeout (not (clojure.core/integer? 100.0))} (not (nil? {:method :POST, :timeout 100.0})))"))
+     "Failed to type check annotate.examples/ping input(s): (and {:timeout (not (integer? 100.0))} (not (nil? {:method :POST, :timeout 100.0})))"))
   (fact (annotation ping) =>
     ['String '& (list 'KwA :method 'Named :timeout 'Int) '=> 'String])
   (fact (canonical ping) =>
@@ -50,7 +50,7 @@
         'clojure.lang.Symbol
         'clojure.lang.Keyword
         'java.lang.String),
-       (list 'optional-key :timeout) (list 'Pred 'clojure.core/integer?)}
+       (list 'optional-key :timeout) (list 'Pred 'integer?)}
       nil)
      '=>
      'java.lang.String])
@@ -63,10 +63,10 @@
   (fact (with-validation (map* 3 (range 5))) =>
     (throws
      clojure.lang.ExceptionInfo
-     "Failed to type check annotate.examples/map* input(s): (not (clojure.core/ifn? 3))"))
+     "Failed to type check annotate.examples/map* input(s): (not (ifn? 3))"))
   (fact (annotation map*) => ['Fn 'CanSeq '=> 'LazySeq])
   (fact (canonical map*) =>
-    [(list 'Pred 'clojure.core/ifn?)
+    [(list 'Pred 'ifn?)
      (list
       'U
       'clojure.lang.Seqable
@@ -120,7 +120,7 @@
   (fact (validate (I annotate.examples.Person {:name String}) (->Person "Billy")) =>
     nil)
   (fact (validate {:name Int} (->Person "Billy")) =>
-    {:name (list 'not (list 'clojure.core/integer? "Billy"))}))
+    {:name (list 'not (list 'integer? "Billy"))}))
 (facts "Protocol"
   (fact (display-type (Protocol Foo)) =>
     (list 'Protocol 'annotate.examples/Foo))
@@ -188,7 +188,7 @@
   (fact (with-validation (ping* "localhost" :method :POST :timeout 100.0)) =>
     (throws
      clojure.lang.ExceptionInfo
-     "Failed to type check ping* input(s): {:timeout (not (clojure.core/integer? 100.0))}"))
+     "Failed to type check ping* input(s): {:timeout (not (integer? 100.0))}"))
   (fact (annotation ping*) =>
     ['String '& (list 'Pairs :method 'Named :timeout 'Int) '=> 'String])
   (fact (canonical ping*) =>
@@ -203,7 +203,7 @@
        'clojure.lang.Keyword
        'java.lang.String)
       :timeout
-      (list 'Pred 'clojure.core/integer?))
+      (list 'Pred 'integer?))
      '=>
      'java.lang.String])
   (fact (-> (var ping*) meta :arglists) =>
@@ -218,7 +218,7 @@
   (fact (vec (lazy-validate (Pred even?) (range 10))) =>
     (throws
      clojure.lang.ExceptionInfo
-     "Failed to type check sequence: (not (clojure.core/even? 1))")))
+     "Failed to type check sequence: (not (even? 1))")))
 (facts "friendly"
   (facts "Explicit error and not found messages"
     (facts "Replace errors with labels"
@@ -230,7 +230,7 @@
     (facts "No labels for error keys"
       (fact (-> (validate {:first-name (NonEmpty String), :age Int} {:first-name ""}) (friendly {:last-name (label "Last name is invalid" "Last name is missing")})) =>
         {:age 'key-not-found,
-         :first-name (list 'not (list 'clojure.core/seq ""))}))
+         :first-name (list 'not (list 'seq ""))}))
     (facts "Key should not be present if no error on field"
       (fact (-> (validate {:first-name (NonEmpty String), :age Int} {:first-name "Billy"}) (friendly {:first-name (label "First name is invalid" "First name is missing"), :age (label "Age is invalid" "Age not found")})) =>
         {:age "Age not found"}))
