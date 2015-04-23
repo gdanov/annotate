@@ -30,8 +30,8 @@
          (var ~sym))))
 
 (defmacro wrap'
-  "Wrap a function with a validating function. Enable validation
-  by calling inside the with-validation macro."
+  "Wrap a function with a validating function. Enable validation by
+  calling inside the with-validation macro."
   [sym type]
   (wrap* sym type 'annotate.fns/fn'))
 
@@ -41,10 +41,10 @@
   (wrap* sym type 'annotate.fns/fnv))
 
 (defmacro wrap$
-  "Like wrap' but inputs/output are optionally validated.
-  Set the system property annotate.typecheck to 'on' to generate
-  an always validated function, or to 'off' to only annotate the
-  function. Defaults to 'off'."
+  "Like wrap' but inputs/output are optionally validated. Set the system
+  property annotate.typecheck to 'on' to generate an always validated
+  function, or to 'off' to only annotate the function. Defaults to
+  'off'."
   [sym type]
   (if (typecheck?)
     `(wrap* ~sym ~type 'annotate.fns/fnv)

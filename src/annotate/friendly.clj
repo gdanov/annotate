@@ -1,13 +1,13 @@
 (ns annotate.friendly
-  "Translate a map of errors returned by validate into a
-  map of friendly error message."
+  "Translate a map of errors returned by validate into a map of friendly
+  error message."
   (:use [annotate.types :only [key-not-found]]))
 
 (defrecord Label [err-msg not-found-msg])
 
 (defn label
-  "Useful for validating form fields where you need to return a
-  friendly error message."
+  "Useful for validating form fields where you need to return a friendly
+  error message."
   ([] (Label. "Invalid input" "Not found"))
   ([err-msg]
      (Label. err-msg "Not found"))
@@ -15,9 +15,8 @@
      (Label. err-msg not-found-msg)))
 
 (defn friendly
-  "Takes an error map and a map of fields to labels.
-  Replaces values in the error map with the appropriate
-  labels."
+  "Takes an error map and a map of fields to labels. Replaces values in
+  the error map with the appropriate labels."
   [errors labels]
   (when errors
     (if labels

@@ -21,9 +21,8 @@
         `(~'not (~pred-sym ~(truncate that)))))))
 
 (defmacro Pred
-  "Defines a type determined by the given predicate fn.
-  It’s values are the set of values for which the
-  predicate is truthy."
+  "Defines a type determined by the given predicate fn. It’s values are
+  the set of values for which the predicate is truthy."
   [f]
   `(PredicateType. ~(if (symbol? f)
                       `(fq-ns (var ~f))
@@ -36,8 +35,7 @@
   (valid-type? [this] true))
 
 (defn optional-key
-  "Indicates that the given key is optional for a
-  map."
+  "Indicates that the given key is optional for a map."
   [k]
   (OptionalKey. k))
 
@@ -50,8 +48,7 @@
   (valid-type? [this] true))
 
 (defn required-key
-  "Indicates that the given key is required for a
-  map."
+  "Indicates that the given key is required for a map."
   [k]
   (RequiredKey. k))
 
@@ -237,8 +234,8 @@
   (validate [this that] (validate canonical that)))
 
 (defn Canonical
-  "Define a type with a simple and canonical representation.
-  The canonical representation will also serve validation."
+  "Define a type with a simple and canonical representation. The
+  canonical representation will also serve validation."
   [simple canonical]
   (CanonicalType. simple canonical))
 
@@ -263,8 +260,8 @@
         (list* 'and errors)))))
 
 (defn U
-  "Union represents the disjunction of the given types,
-  similar to logical or. Ordering of types is preserved."
+  "Union represents the disjunction of the given types, similar to
+  logical or. Ordering of types is preserved."
   [& ts]
   (UnionType. ts))
 
@@ -279,9 +276,8 @@
       (some #(validate % that) ts))))
 
 (defn I
-  "Intersection represents the conjunction of the
-  given types, similar to logical and. Ordering of
-  types is preserved."
+  "Intersection represents the conjunction of the given types, similar
+  to logical and. Ordering of types is preserved."
   [& ts]
   (IntersectionType. ts))
 
@@ -306,9 +302,8 @@
 (def Nothing (NothingType.))
 
 (defn nothing?
-  "Given some object x, always returns false.
-  Nothing is not a value, therefore all values are
-  not Nothing."
+  "Given some object x, always returns false. Nothing is not a value,
+  therefore all values are not Nothing."
   [x]
   false)
 
@@ -321,10 +316,9 @@
       `(~'not= ~v ~(truncate that)))))
 
 (defn Eq
-  "Define a type with exactly one member. This type is
-  only necessary in cases where the type cannot
-  otherwise be expressed.  For example, [:success]
-  represents a vector of zero or more elements whose
+  "Define a type with exactly one member. This type is only necessary in
+  cases where the type cannot otherwise be expressed. For
+  example, [:success] represents a vector of zero or more elements whose
   value is :success. Use (Eq [:success]) to express the exact value."
   [v]
   (EqType. v))
@@ -362,22 +356,20 @@
         `(~'not (~'ifn? ~(truncate that)))))))
 
 (defmacro IFn
-  "Ordered intersection of function arities. Useful for
-  documenting higher order functions. Actual input and output
-  types are NOT checked."
+  "Ordered intersection of function arities. Useful for documenting
+  higher order functions. Actual input and output types are NOT
+  checked."
   [& args]
   `(IFnType. (list ~@(map quote-special args))))
 
 (defn NonEmpty
-  "Defines a type where the given collection has
-  count > 0."
+  "Defines a type where the given collection has count > 0."
   ([] (Canonical 'NonEmpty (Pred seq)))
   ([coll]
      (Canonical (list 'NonEmpty coll) (I coll (Pred seq)))))
 
 (defn Empty
-  "Defines a type where the given collection has
-  count = 0."
+  "Defines a type where the given collection has count = 0."
   ([] (Canonical 'Empty (Pred empty?)))
   ([coll]
      (Canonical (list 'Empty coll) (I coll (Pred empty?)))))
@@ -407,9 +399,8 @@
             `(~'> (~'count ~(truncate that)) ~max)))))
 
 (defn Count
-  "Define a type whose count must be between min
-  and max. If max is not passed, min and max
-  will be the same."
+  "Define a type whose count must be between min and max. If max is not
+  passed, min and max will be the same."
   ([x]
      (CountType. x x))
   ([min max]
@@ -442,8 +433,8 @@
       (validate (I container-type (Member member-type)) that))))
 
 (defn Coll
-  "A persistent collection with member type member-type
-  and optionally container type container-type."
+  "A persistent collection with member type member-type and optionally
+  container type container-type."
   ([] (Canonical 'Coll (Pred coll?)))
   ([member-type]
      (Coll (Canonical 'Coll (Pred coll?)) member-type))
@@ -457,8 +448,8 @@
 
 (defn LazySeq
   "A lazy sequence of member type t.
-  WARNING: Usage of the one-arity version of this
-  function could realize the entire Lazy Seq."
+  WARNING: Usage of the one-arity version of this function could realize
+  the entire Lazy Seq."
   ([] clojure.lang.LazySeq)
   ([t] (Coll (LazySeq) t)))
 
@@ -494,8 +485,8 @@
   ([kt vt] (Coll (SortedMap) [kt vt])))
 
 (defn KwA
-  "Given one or more pairs of keyword args to types,
-  returns a map type where the keys are optional.
+  "Given one or more pairs of keyword args to types, returns a
+  map type where the keys are optional.
 
   For example:
   (KwA :method Named :timeout Int)
@@ -535,10 +526,10 @@
     (validate m (into {} (map vec (partition 2 that))))))
 
 (defn Pairs
-  "Given sequential key/value pairs returns a type that
-  behaves like Kw, but expects the data to be a sequential
-  list of kev/value pairs instead of a map. Use when wrapping
-  a function that takes keyword arguments."
+  "Given sequential key/value pairs returns a type that behaves like Kw,
+  but expects the data to be a sequential list of kev/value pairs
+  instead of a map. Use when wrapping a function that takes keyword
+  arguments."
   [& kt-pairs]
   (->> (partition 2 kt-pairs)
        (map (fn [[k t]] [(optional-key k) t]))
