@@ -20,20 +20,20 @@
   (fact (-> (var greeting) meta :doc) =>
     "([=> String] [String => String])\n\nDoc string"))
 (facts "rest args"
-  (fact (with-validation (append* "hi")) => "hi")
-  (fact (with-validation (append* "hi" " there")) => "hi there")
-  (fact (with-validation (append* "hi" :there)) =>
+  (fact (with-checking (append* "hi")) => "hi")
+  (fact (with-checking (append* "hi" " there")) => "hi there")
+  (fact (with-checking (append* "hi" :there)) =>
     (throws
      clojure.lang.ExceptionInfo
      "Failed to type check annotate.examples/append* input(s): ((not (instance? String :there)))")))
 (facts "keyword args"
-  (fact (with-validation (ping "localhost")) =>
+  (fact (with-checking (ping "localhost")) =>
     "url: localhost, method: GET, timeout: ")
-  (fact (with-validation (ping "localhost" :method :POST)) =>
+  (fact (with-checking (ping "localhost" :method :POST)) =>
     "url: localhost, method: POST, timeout: ")
-  (fact (with-validation (ping "localhost" :method "POST")) =>
+  (fact (with-checking (ping "localhost" :method "POST")) =>
     "url: localhost, method: POST, timeout: ")
-  (fact (with-validation (ping "localhost" :method :POST :timeout 100.0)) =>
+  (fact (with-checking (ping "localhost" :method :POST :timeout 100.0)) =>
     (throws
      clojure.lang.ExceptionInfo
      "Failed to type check annotate.examples/ping input(s): (and {:timeout (not (integer? 100.0))} (not (nil? {:method :POST, :timeout 100.0})))"))
@@ -59,8 +59,8 @@
   (fact (-> (var ping) meta :doc) =>
     "[String & (KwA :method Named :timeout Int) => String]"))
 (facts "higher order"
-  (fact (with-validation (map* inc (range 5))) => (list 1 2 3 4 5))
-  (fact (with-validation (map* 3 (range 5))) =>
+  (fact (with-checking (map* inc (range 5))) => (list 1 2 3 4 5))
+  (fact (with-checking (map* 3 (range 5))) =>
     (throws
      clojure.lang.ExceptionInfo
      "Failed to type check annotate.examples/map* input(s): (not (ifn? 3))"))
@@ -81,7 +81,7 @@
   (fact (-> (var map*) meta :doc) => "[Fn CanSeq => LazySeq]")
   (fact (-> (var map*) meta :added) => "1.0"))
 (facts "output type error"
-  (fact (with-validation (str* "")) =>
+  (fact (with-checking (str* "")) =>
     (throws
      clojure.lang.ExceptionInfo
      "Failed to type check annotate.examples/str* output: (not (instance? String nil))")))
@@ -115,26 +115,26 @@
      clojure.lang.ExceptionInfo
      "Failed to type check annotate.examples/->User input(s): (not (instance? String :billy)), (not (instance? String :bob))")))
 (facts "record"
-  (fact (validate annotate.examples.Person (->Person "Billy")) => nil)
-  (fact (validate {:name String} (->Person "Billy")) => nil)
-  (fact (validate (I annotate.examples.Person {:name String}) (->Person "Billy")) =>
+  (fact (check annotate.examples.Person (->Person "Billy")) => nil)
+  (fact (check {:name String} (->Person "Billy")) => nil)
+  (fact (check (I annotate.examples.Person {:name String}) (->Person "Billy")) =>
     nil)
-  (fact (validate {:name Int} (->Person "Billy")) =>
+  (fact (check {:name Int} (->Person "Billy")) =>
     {:name (list 'not (list 'integer? "Billy"))}))
 (facts "Protocol"
   (fact (display-type (Protocol Foo)) =>
     (list 'Protocol 'annotate.examples/Foo))
-  (fact (validate (Protocol Foo) (->Bar 3)) => nil)
-  (fact (validate (Protocol Foo) 3) =>
+  (fact (check (Protocol Foo) (->Bar 3)) => nil)
+  (fact (check (Protocol Foo) 3) =>
     (list 'not (list 'satisfies? 'annotate.examples/Foo 3))))
 (facts "Recursive"
   (fact (display-type Element) =>
     {:tag 'Keyword,
      :attrs {'Keyword 'String},
      :content (list 'Seqable (list 'U 'String 'Element))})
-  (fact (validate Element {:tag :a, :attrs {:b "c"}, :content ["d" "e" "f"]}) =>
+  (fact (check Element {:tag :a, :attrs {:b "c"}, :content ["d" "e" "f"]}) =>
     nil)
-  (fact (validate Element {:tag :a, :attrs {:b :c}, :content ["d" "e" :f]}) =>
+  (fact (check Element {:tag :a, :attrs {:b :c}, :content ["d" "e" :f]}) =>
     {:attrs {:b (list 'not (list 'instance? 'String :c))},
      :content
      (list
@@ -144,9 +144,9 @@
        'and
        (list 'not (list 'instance? 'String :f))
        (list 'not (list 'map? :f))))})
-  (fact (validate Element {:tag :a, :attrs {:b "c"}, :content ["d" "e" {:tag :f, :attrs {}, :content ["g"]}]}) =>
+  (fact (check Element {:tag :a, :attrs {:b "c"}, :content ["d" "e" {:tag :f, :attrs {}, :content ["g"]}]}) =>
     nil)
-  (fact (validate Element {:tag :a, :attrs {:b "c"}, :content ["d" "e" {:tag :f, :attrs {:g :h}, :content [:fail]}]}) =>
+  (fact (check Element {:tag :a, :attrs {:b "c"}, :content ["d" "e" {:tag :f, :attrs {:g :h}, :content [:fail]}]}) =>
     {:content
      (list
       nil
@@ -179,13 +179,13 @@
   (fact (-> (var add) meta :doc) =>
     "([=> Num] [Num => Num] [Num Num => Num] [Num Num & (Seq Num) => Num])\n\nAdd some numbers."))
 (facts "wrap' with keyword arguments"
-  (fact (with-validation (ping* "localhost")) =>
+  (fact (with-checking (ping* "localhost")) =>
     "url: localhost, method: GET, timeout: ")
-  (fact (with-validation (ping* "localhost" :method :POST)) =>
+  (fact (with-checking (ping* "localhost" :method :POST)) =>
     "url: localhost, method: POST, timeout: ")
-  (fact (with-validation (ping* "localhost" :timeout 50 :method "POST")) =>
+  (fact (with-checking (ping* "localhost" :timeout 50 :method "POST")) =>
     "url: localhost, method: POST, timeout: 50")
-  (fact (with-validation (ping* "localhost" :method :POST :timeout 100.0)) =>
+  (fact (with-checking (ping* "localhost" :method :POST :timeout 100.0)) =>
     (throws
      clojure.lang.ExceptionInfo
      "Failed to type check ping* input(s): {:timeout (not (integer? 100.0))}"))
@@ -213,35 +213,35 @@
 (facts "wrap$"
   (fact (id 3) => 3)
   (fact (-> (var id) meta :doc) => "[String => String]"))
-(facts "lazy-validate"
-  (fact (vec (lazy-validate Int (range 10))) => [0 1 2 3 4 5 6 7 8 9])
-  (fact (vec (lazy-validate (Pred even?) (range 10))) =>
+(facts "lazy-check"
+  (fact (vec (lazy-check Int (range 10))) => [0 1 2 3 4 5 6 7 8 9])
+  (fact (vec (lazy-check (Pred even?) (range 10))) =>
     (throws
      clojure.lang.ExceptionInfo
      "Failed to type check sequence: (not (even? 1))")))
 (facts "friendly"
   (facts "Explicit error and not found messages"
     (facts "Replace errors with labels"
-      (fact (-> (validate {:first-name (NonEmpty String), :age Int} {:first-name ""}) (friendly {:first-name (label "First name is invalid" "First name is missing"), :age (label "Age is invalid" "Age not found")})) =>
+      (fact (-> (check {:first-name (NonEmpty String), :age Int} {:first-name ""}) (friendly {:first-name (label "First name is invalid" "First name is missing"), :age (label "Age is invalid" "Age not found")})) =>
         {:age "Age not found", :first-name "First name is invalid"}))
     (facts "No errors"
-      (fact (-> (validate {:first-name (NonEmpty String), :age Int} {:first-name "Billy", :age 35}) (friendly {:first-name (label "First name is invalid" "First name is missing"), :age (label "Age is invalid" "Age not found")})) =>
+      (fact (-> (check {:first-name (NonEmpty String), :age Int} {:first-name "Billy", :age 35}) (friendly {:first-name (label "First name is invalid" "First name is missing"), :age (label "Age is invalid" "Age not found")})) =>
         nil))
     (facts "No labels for error keys"
-      (fact (-> (validate {:first-name (NonEmpty String), :age Int} {:first-name ""}) (friendly {:last-name (label "Last name is invalid" "Last name is missing")})) =>
+      (fact (-> (check {:first-name (NonEmpty String), :age Int} {:first-name ""}) (friendly {:last-name (label "Last name is invalid" "Last name is missing")})) =>
         {:age 'key-not-found,
          :first-name (list 'not (list 'seq ""))}))
     (facts "Key should not be present if no error on field"
-      (fact (-> (validate {:first-name (NonEmpty String), :age Int} {:first-name "Billy"}) (friendly {:first-name (label "First name is invalid" "First name is missing"), :age (label "Age is invalid" "Age not found")})) =>
+      (fact (-> (check {:first-name (NonEmpty String), :age Int} {:first-name "Billy"}) (friendly {:first-name (label "First name is invalid" "First name is missing"), :age (label "Age is invalid" "Age not found")})) =>
         {:age "Age not found"}))
     (facts "Nested errors"
-      (fact (-> (validate {:name {:first (NonEmpty String), :last (NonEmpty String)}, :age Int} {:name {:first ""}}) (friendly {:name {:first (label "First name is invalid" "First name is missing"), :last (label "Last name is invalid" "Last name is missing")}, :age (label "Age is invalid" "Age not found")})) =>
+      (fact (-> (check {:name {:first (NonEmpty String), :last (NonEmpty String)}, :age Int} {:name {:first ""}}) (friendly {:name {:first (label "First name is invalid" "First name is missing"), :last (label "Last name is invalid" "Last name is missing")}, :age (label "Age is invalid" "Age not found")})) =>
         {:age "Age not found",
          :name {:last "Last name is missing", :first "First name is invalid"}})))
   (facts "Default error and not found messages"
     (facts "Replace errors with labels"
-      (fact (-> (validate {:first-name (NonEmpty String), :age Int} {:first-name ""}) (friendly {:first-name (label), :age (label)})) =>
+      (fact (-> (check {:first-name (NonEmpty String), :age Int} {:first-name ""}) (friendly {:first-name (label), :age (label)})) =>
         {:age "Not found", :first-name "Invalid input"}))
     (facts "Nested errors"
-      (fact (-> (validate {:name {:first (NonEmpty String), :last (NonEmpty String)}, :age Int} {:name {:first ""}}) (friendly {:name {:first (label), :last (label)}, :age (label)})) =>
+      (fact (-> (check {:name {:first (NonEmpty String), :last (NonEmpty String)}, :age Int} {:name {:first ""}}) (friendly {:name {:first (label), :last (label)}, :age (label)})) =>
         {:age "Not found", :name {:last "Not found", :first "Invalid input"}}))))

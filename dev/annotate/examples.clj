@@ -1,11 +1,11 @@
 (ns annotate.examples
   (:use [annotate core types fns records wrap friendly]))
 
-;; Never validate
+;; Never type check
 (defna append [String String => String]
   [s1 s2] (str s1 s2))
 
-;; Multi-arity, with doc-string, always validated
+;; Multi-arity, with doc-string, always type checked
 (defnv greeting ([=> String] [String => String])
   "Doc string"
   ([] (greeting "world"))
@@ -34,7 +34,7 @@
 (defrecordv User [String String]
   [first-name last-name])
 
-;; Validate record keys
+;; Type check record keys
 (defrecord Person [name])
 
 ;; Protocols

@@ -14,7 +14,7 @@
   Typeable
   (display-type [this] (list 'Pred pred-sym))
   (valid-type? [this] (fn? pred))
-  (validate [this that]
+  (check [this that]
     (if-not (valid-type? this)
       (not-valid-type this)
       (when-not (pred that)
@@ -63,30 +63,30 @@
 (defn fixed-key? [x]
   ((some-fn implicit-required-key? required-key? optional-key?) x))
 
-(defn- validate-seqable-0
+(defn- check-seqable-0
   [this that]
   (when-not (empty? that)
     `(~'not (~'empty? ~(truncate that)))))
 
-(defn- validate-seqable-1
+(defn- check-seqable-1
   [to-coll this that]
   (let [t (first this)]
     (if (empty? that) nil
-        (let [res (map #(validate t %) that)]
+        (let [res (map #(check t %) that)]
           (when-not (every? nil? res)
             (to-coll res))))))
 
-(defn- validate-sequential
+(defn- check-sequential
   [{:keys [pred-sym pred]} to-coll this that]
   (if-not (pred that)
     `(~'not (~pred-sym ~(truncate that)))
     (case (count this)
-      0 (validate-seqable-0 this that)
-      1 (validate-seqable-1 to-coll this that)
+      0 (check-seqable-0 this that)
+      1 (check-seqable-1 to-coll this that)
       (if (not= (count this) (count that))
         `(~'not= (~'count ~that) ~(count this))
         (let [res (->> (map vector this that)
-                       (map (fn [[t d]] (validate t d))))]
+                       (map (fn [[t d]] (check t d))))]
           (when-not (every? nil? res)
             (to-coll res)))))))
 
@@ -94,7 +94,7 @@
   [m]
   (sort-by (comp not fixed-key? first) m))
 
-(defn- validate-fixed-keys
+(defn- check-fixed-keys
   [kv-pairs that]
   (->> (for [[k v] kv-pairs
              :while (fixed-key? k)]
@@ -102,15 +102,15 @@
            (let [k (if (required-key? k) (:k k) k)]
              (if-not (contains? that k)
                [k key-not-found]
-               (when-let [res (validate v (get that k))]
+               (when-let [res (check v (get that k))]
                  [k res])))
            (let [k (:k k)]
              (when (contains? that k)
-               (when-let [res (validate v (get that k))]
+               (when-let [res (check v (get that k))]
                  [k res])))))
        (remove nil?)))
 
-(defn- validate-generic-type
+(defn- check-generic-type
   [kv-pairs that]
   (let [fixed-keys
         (->> (take-while (comp fixed-key? first) kv-pairs)
@@ -121,8 +121,8 @@
         (first (drop-while (comp fixed-key? first) kv-pairs))]
     (when generic-type
       (for [[k v] (apply dissoc that fixed-keys)
-            :let [key-res (validate key-type k)
-                  val-res (validate val-type v)]
+            :let [key-res (check key-type k)
+                  val-res (check val-type v)]
             :when (or key-res val-res)]
         [(if (nil? key-res) k key-res)
          (if (nil? val-res) v val-res)]))))
@@ -131,7 +131,7 @@
   nil
   (display-type [this] nil)
   (valid-type? [this] true)
-  (validate [this that]
+  (check [this that]
     (when-not (= this that)
       `(~'not (~'nil? ~(truncate that)))))
 
@@ -141,7 +141,7 @@
               (.getCanonicalName this)
               (.getSimpleName this))))
   (valid-type? [this] true)
-  (validate [this that]
+  (check [this that]
     (when-not (instance? this that)
       `(~'not (~'instance? ~(display-type this)
                            ~(truncate that)))))
@@ -149,7 +149,7 @@
   java.util.regex.Pattern
   (display-type [this] this)
   (valid-type? [this] true)
-  (validate [this that]
+  (check [this that]
     (cond (not (string? that))
           `(~'not (~'string? ~(truncate that)))
           (not (re-matches this that))
@@ -166,16 +166,16 @@
          (every? (fn [[k v]] (and (valid-type? k)
                                  (valid-type? v)))
                  this)))
-  (validate [this that]
+  (check [this that]
     (cond (not (valid-type? this)) (not-valid-type this)
           (not (map? that)) `(~'not (~'map? ~(truncate that)))
           (empty? this) (when-not (empty? that)
                           `(~'not (~'empty? ~(truncate that))))
           :else (let [kv-pairs (sort-map-by-keys this)
                       fixed-key-res
-                      (validate-fixed-keys kv-pairs that)
+                      (check-fixed-keys kv-pairs that)
                       generic-type-res
-                      (validate-generic-type kv-pairs that)]
+                      (check-generic-type kv-pairs that)]
                   (when (or (seq fixed-key-res)
                             (seq generic-type-res))
                     (->> (concat fixed-key-res generic-type-res)
@@ -185,41 +185,41 @@
   (display-type [this]
     (apply list (map display-type this)))
   (valid-type? [this] (every? valid-type? this))
-  (validate [this that]
+  (check [this that]
     (if-not (valid-type? this)
       (not-valid-type this)
-      (validate-sequential (Pred list?) list* this that)))
+      (check-sequential (Pred list?) list* this that)))
 
   IPersistentVector
   (display-type [this]
     (mapv display-type this))
   (valid-type? [this] (every? valid-type? this))
-  (validate [this that]
+  (check [this that]
     (if-not (valid-type? this)
       (not-valid-type this)
-      (validate-sequential (Pred vector?) vec this that)))
+      (check-sequential (Pred vector?) vec this that)))
 
   IPersistentSet
   (display-type [this]
     (set (map display-type this)))
   (valid-type? [this]
     (and (< (count this) 2) (every? valid-type? this)))
-  (validate [this that]
+  (check [this that]
     (cond (not (valid-type? this)) (not-valid-type this)
           (not (set? that)) `(~'not (~'set? ~(truncate that)))
           :else (case (count this)
-                  0 (validate-seqable-0 this that)
-                  1 (validate-seqable-1 set this that))))
+                  0 (check-seqable-0 this that)
+                  1 (check-seqable-1 set this that))))
 
   Var
   (display-type [this] (-> this meta :name))
   (valid-type? [this] true)
-  (validate [this that] (validate @this that))
+  (check [this that] (check @this that))
 
   Object
   (display-type [this] this)
   (valid-type? [this] true)
-  (validate [this that]
+  (check [this that]
     (when-not (= this that)
       `(~'not= ~this ~(truncate that)))))
 
@@ -229,11 +229,11 @@
                          (display-type canonical)
                          (display-type simple)))
   (valid-type? [this] (valid-type? canonical))
-  (validate [this that] (validate canonical that)))
+  (check [this that] (check canonical that)))
 
 (defn Canonical
   "Define a type with a simple and canonical representation. The
-  canonical representation will also serve validation."
+  canonical representation will also serve type checking."
   [simple canonical]
   (CanonicalType. simple canonical))
 
@@ -247,12 +247,12 @@
   (display-type [this]
     (apply list 'U (map display-type ts)))
   (valid-type? [this] (and (seq ts) (every? valid-type? ts)))
-  (validate [this that]
+  (check [this that]
     (if-not (valid-type? this)
       (not-valid-type this)
       (when-let [errors (loop [errors [] types ts]
                           (if types
-                            (when-let [error (validate (first types) that)]
+                            (when-let [error (check (first types) that)]
                               (recur (conj errors error) (next types)))
                             (seq errors)))]
         (list* 'and errors)))))
@@ -268,10 +268,10 @@
   (display-type [this]
     (apply list 'I (map display-type ts)))
   (valid-type? [this] (and (seq ts) (every? valid-type? ts)))
-  (validate [this that]
+  (check [this that]
     (if-not (valid-type? this)
       (not-valid-type this)
-      (some #(validate % that) ts))))
+      (some #(check % that) ts))))
 
 (defn I
   "Intersection represents the conjunction of the given types, similar
@@ -283,7 +283,7 @@
   Typeable
   (display-type [this] 'Any)
   (valid-type? [this] true)
-  (validate [this that] nil))
+  (check [this that] nil))
 
 (def Any (AnyType.))
 
@@ -294,7 +294,7 @@
   Typeable
   (display-type [this] 'Nothing)
   (valid-type? [this] true)
-  (validate [this that]
+  (check [this that]
     `(~'not (~'nothing? ~(truncate that)))))
 
 (def Nothing (NothingType.))
@@ -309,7 +309,7 @@
   Typeable
   (display-type [this] (list 'Eq v))
   (valid-type? [this] true)
-  (validate [this that]
+  (check [this that]
     (when-not (= v that)
       `(~'not= ~v ~(truncate that)))))
 
@@ -347,7 +347,7 @@
          (every? vector? arglists)
          (->> (mapcat #(map valid-type? %) arglists)
               (every? true?))))
-  (validate [this that]
+  (check [this that]
     (if-not (valid-type? this)
       (not-valid-type this)
       (when-not (ifn? that)
@@ -389,7 +389,7 @@
                          (list 'Count min max)))
   (valid-type? [this] (and (integer? min) (integer? max)
                            (>= max min)))
-  (validate [this that]
+  (check [this that]
     (let [cnt (count that)]
       (cond (< cnt min)
             `(~'< (~'count ~(truncate that)) ~min)
@@ -408,8 +408,8 @@
   Typeable
   (display-type [this] (list 'Member (display-type t)))
   (valid-type? [this] (valid-type? t))
-  (validate [this that]
-    (let [res (map #(validate t %) that)]
+  (check [this that]
+    (let [res (map #(check t %) that)]
       (when-not (every? nil? res)
         res))))
 
@@ -425,10 +425,10 @@
                              (I container-type (Member member-type)))))
   (valid-type? [this]
     (and (valid-type? container-type) (valid-type? member-type)))
-  (validate [this that]
+  (check [this that]
     (if-not (valid-type? this)
       (not-valid-type this)
-      (validate (I container-type (Member member-type)) that))))
+      (check (I container-type (Member member-type)) that))))
 
 (defn Coll
   "A persistent collection with member type member-type and optionally
@@ -503,7 +503,7 @@
   Typeable
   (display-type [this] (list 'Protocol proto-sym))
   (valid-type? [this] (and (map? proto) (var? (:var proto))))
-  (validate [this that]
+  (check [this that]
     (if-not (valid-type? this)
       (not-valid-type this)
       (when-not (satisfies? proto that)
@@ -520,8 +520,8 @@
   (display-type [this]
     (apply list 'Pairs (map display-type kt-pairs)))
   (valid-type? [this] (valid-type? m))
-  (validate [this that]
-    (validate m (into {} (map vec (partition 2 that))))))
+  (check [this that]
+    (check m (into {} (map vec (partition 2 that))))))
 
 (defn Pairs
   "Given sequential key/value pairs returns a type that behaves like Kw,
@@ -538,7 +538,7 @@
   Typeable
   (display-type [this] (list 'Subset (display-type superset)))
   (valid-type? [this] (set? superset))
-  (validate [this that]
+  (check [this that]
     (if-not (valid-type? this)
       (not-valid-type this)
       (when-not (set/subset? that superset)
@@ -553,14 +553,14 @@
   Typeable
   (display-type [this] (list 'ExMsg (display-type t)))
   (valid-type? [this] (valid-type? t))
-  (validate [this that]
+  (check [this that]
     (cond (not (valid-type? this))
           (not-valid-type this)
           (not (instance? Exception that))
           `(~'not (~'instance? ~'Exception ~(truncate that)) )
           :else
           (let [ex-msg (.getMessage that)]
-            (validate t ex-msg)))))
+            (check t ex-msg)))))
 
 (defn ExMsg
   "Returns a type whose values are exceptions with a message of type t."

@@ -1,5 +1,5 @@
 (ns annotate.friendly
-  "Translate a map of errors returned by validate into a map of friendly
+  "Translate a map of errors returned by check into a map of friendly
   error message."
   (:use [annotate.types :only [key-not-found]]))
 
