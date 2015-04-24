@@ -1,5 +1,5 @@
 (ns annotate.wrap
-  "Wrap existing functions with validating functions."
+  "Wrap existing functions with type checking functions."
   (:use [annotate core fns util]))
 
 (defn- wrap-fn-call [curr-var type]
@@ -30,21 +30,21 @@
          (var ~sym))))
 
 (defmacro wrap'
-  "Wrap a function with a validating function. Enable validation by
-  calling inside the with-validation macro."
+  "Wrap a function with a type checking function. Enable type checking
+  by calling inside the with-checking macro."
   [sym type]
   (wrap* sym type 'annotate.fns/fn'))
 
 (defmacro wrapv
-  "Like wrap' but inputs/output are always validated."
+  "Like wrap' but inputs/output are always type checked."
   [sym type]
   (wrap* sym type 'annotate.fns/fnv))
 
 (defmacro wrap$
-  "Like wrap' but inputs/output are optionally validated. Set the system
-  property annotate.typecheck to 'on' to generate an always validated
-  function, or to 'off' to only annotate the function. Defaults to
-  'off'."
+  "Like wrap' but inputs/output are optionally type checked. Set the
+  system property annotate.typecheck to 'on' to generate an always type
+  checked function, or to 'off' to only annotate the function. Defaults
+  to 'off'."
   [sym type]
   (if (typecheck?)
     `(wrap* ~sym ~type 'annotate.fns/fnv)

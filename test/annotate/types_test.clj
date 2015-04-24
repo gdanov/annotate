@@ -3,11 +3,11 @@
 
 (facts "Pred"
   (fact (display-type (Pred even?)) => (list 'Pred 'even?))
-  (fact (validate (Pred even?) 2) => nil)
-  (fact (validate (Pred even?) 3) => (list 'not (list 'even? 3)))
-  (fact (validate (Pred (fn [x] (> x 0))) -1) =>
+  (fact (check (Pred even?) 2) => nil)
+  (fact (check (Pred even?) 3) => (list 'not (list 'even? 3)))
+  (fact (check (Pred (fn [x] (> x 0))) -1) =>
     (list 'not (list (list 'fn ['x] (list '> 'x 0)) -1)))
-  (fact (validate (Pred :age) {:age 36}) =>
+  (fact (check (Pred :age) {:age 36}) =>
     (list 'not (list 'annotate.core/valid-type? (list 'Pred :age)))))
 (facts "fixed-key?"
   (fact (fixed-key? :hi) => true)
@@ -18,119 +18,123 @@
   (fact (fixed-key? String) => false))
 (facts "Union"
   (fact (display-type (U String Number)) => (list 'U 'String 'Number))
-  (fact (validate (U) "Billy") => (list 'not (list 'annotate.core/valid-type? (list 'U))))
-  (fact (validate (U (Pred list?) (Pred class?)) (list 1)) => nil)
-  (fact (validate (U (Pred vector?) (Pred class?)) (list 1)) =>
+  (fact (check (U) "Billy") => (list 'not (list 'annotate.core/valid-type? (list 'U))))
+  (fact (check (U (Pred list?) (Pred class?)) (list 1)) => nil)
+  (fact (check (U (Pred vector?) (Pred class?)) (list 1)) =>
     (list
      'and
      (list 'not (list 'vector? (list 1)))
      (list 'not (list 'class? (list 1)))))
-  (fact (validate (U nil 3 String) 3) => nil))
+  (fact (check (U nil 3 String) 3) => nil))
 (facts "Intersection"
   (fact (display-type (I Number (Pred even?))) =>
     (list 'I 'Number (list 'Pred 'even?)))
-  (fact (validate (I) 39) => (list 'not (list 'annotate.core/valid-type? (list 'I))))
-  (fact (validate (I (Pred list?) (Pred seq?)) (quote (1))) => nil)
-  (fact (validate (I (Pred list?) (Pred empty?)) (quote (1))) =>
+  (fact (check (I) 39) => (list 'not (list 'annotate.core/valid-type? (list 'I))))
+  (fact (check (I (Pred list?) (Pred seq?)) (quote (1))) => nil)
+  (fact (check (I (Pred list?) (Pred empty?)) (quote (1))) =>
     (list 'not (list 'empty? (list 1)))))
 (facts "Eq"
   (fact (display-type (Eq [true])) => (list 'Eq [true]))
-  (fact (validate (Eq [:success]) [:success]) => nil)
-  (fact (validate (Eq [true]) [true true]) => (list 'not= [true] [true true])))
+  (fact (check (Eq [:success]) [:success]) => nil)
+  (fact (check (Eq [true]) [true true]) => (list 'not= [true] [true true])))
 (facts "Maps"
   (fact (display-type {Keyword String}) => {'Keyword 'String})
   (fact (display-type {:name String, :age Long}) => {:age 'Long, :name 'String})
-  (fact (validate {Keyword String} #{}) => (list 'not (list 'map? #{})))
-  (fact (validate {Keyword String} {}) => nil)
-  (fact (validate {Keyword String} {:name :billy}) =>
+  (fact (check {Keyword String} #{}) => (list 'not (list 'map? #{})))
+  (fact (check {Keyword String} {}) => nil)
+  (fact (check {Keyword String} {:name :billy}) =>
     {:name (list 'not (list 'instance? 'String :billy))})
-  (fact (validate {Keyword String} {"name" "billy"}) =>
+  (fact (check {Keyword String} {"name" "billy"}) =>
     {(list 'not (list 'instance? 'Keyword "name")) "billy"})
-  (fact (validate {:name String} {:age 36}) => {:name 'key-not-found})
-  (fact (validate {:name "David", :age Long} {:age 36, :name "David"}) => nil)
-  (fact (validate {:name "David", :age Long} {:age :36, :nam "David", "a" :1}) =>
+  (fact (check {:name String} {:age 36}) => {:name 'key-not-found})
+  (fact (check {:name "David", :age Long} {:age 36, :name "David"}) => nil)
+  (fact (check {:name "David", :age Long} {:age :36, :nam "David", "a" :1}) =>
     {:age (list 'not (list 'instance? 'Long :36)), :name 'key-not-found})
-  (fact (validate {Keyword String} {:name "David", :age "36"}) => nil)
-  (fact (validate {(required-key :a) String} {:b "hi"}) => {:a 'key-not-found})
-  (fact (validate {(required-key :a) String} {:a "hi"}) => nil)
-  (fact (validate {(required-key :a) String} {:a "hi", :b "there"}) => nil)
-  (fact (validate {(optional-key :a) String} {:b "hi"}) => nil)
-  (fact (validate {(optional-key :a) String} {:b "hi", :a "there"}) => nil)
-  (fact (validate {:name String, String String} {:name "Bob"}) =>
-    (list 'not (list 'annotate.core/valid-type? {:name 'String, 'String 'String}))))
+  (fact (check {Keyword String} {:name "David", :age "36"}) => nil)
+  (fact (check {(required-key :a) String} {:b "hi"}) => {:a 'key-not-found})
+  (fact (check {(required-key :a) String} {:a "hi"}) => nil)
+  (fact (check {(required-key :a) String} {:a "hi", :b "there"}) => nil)
+  (fact (check {(optional-key :a) String} {:b "hi"}) => nil)
+  (fact (check {(optional-key :a) String} {:b "hi", :a "there"}) => nil)
+  (fact (check {:name String, String String} {:name "Bob"}) =>
+        (list 'not (list 'annotate.core/valid-type? {:name 'String, 'String 'String})))
+  (fact (check {} {}) => nil)
+  (fact (check {} {:name "David"}) => (list 'not (list 'empty? {:name "David"}))))
 (facts "Vectors"
   (fact (display-type [String]) => ['String])
-  (fact (validate [] []) => nil)
-  (fact (validate [] #{}) => (list 'not (list 'vector? #{})))
-  (fact (validate [String] []) => nil)
-  (fact (validate [String] ["hi"]) => nil)
-  (fact (validate [String] [:hi]) => [(list 'not (list 'instance? 'String :hi))])
-  (fact (validate [String] ["hi" "there" "Billy"]) => nil)
-  (fact (validate [String] ["hi" :there "Billy"]) =>
+  (fact (check [] []) => nil)
+  (fact (check [] [:hi]) => (list 'not (list 'empty? [:hi])))
+  (fact (check [] #{}) => (list 'not (list 'vector? #{})))
+  (fact (check [String] []) => nil)
+  (fact (check [String] ["hi"]) => nil)
+  (fact (check [String] [:hi]) => [(list 'not (list 'instance? 'String :hi))])
+  (fact (check [String] ["hi" "there" "Billy"]) => nil)
+  (fact (check [String] ["hi" :there "Billy"]) =>
     [nil (list 'not (list 'instance? 'String :there)) nil])
-  (fact (validate [[Keyword String]] [[:name "Billy"] [:name "Joey"]]) => nil)
-  (fact (validate [[Keyword String]] [[:name "Billy"] [:name :Joey]]) =>
+  (fact (check [[Keyword String]] [[:name "Billy"] [:name "Joey"]]) => nil)
+  (fact (check [[Keyword String]] [[:name "Billy"] [:name :Joey]]) =>
     [nil [nil (list 'not (list 'instance? 'String :Joey))]]))
 (facts "Lists"
   (fact (display-type (list String)) => (list 'String))
-  (fact (validate (list) (list)) => nil)
-  (fact (validate (list) #{}) => (list 'not (list 'list? #{})))
-  (fact (validate (list String) (list)) => nil)
-  (fact (validate (list String) (list "hi")) => nil)
-  (fact (validate (list String) (list :hi)) =>
+  (fact (check (list) (list)) => nil)
+  (fact (check (list) (list 1)) => (list 'not (list 'empty? (list 1))))
+  (fact (check (list) #{}) => (list 'not (list 'list? #{})))
+  (fact (check (list String) (list)) => nil)
+  (fact (check (list String) (list "hi")) => nil)
+  (fact (check (list String) (list :hi)) =>
     (list (list 'not (list 'instance? 'String :hi))))
-  (fact (validate (list String) (list "hi" "there" "Billy")) => nil)
-  (fact (validate (list String) (list "hi" :there "Billy")) =>
+  (fact (check (list String) (list "hi" "there" "Billy")) => nil)
+  (fact (check (list String) (list "hi" :there "Billy")) =>
     (list nil (list 'not (list 'instance? 'String :there)) nil)))
 (facts "Sets"
   (fact (display-type #{String}) => #{'String})
-  (fact (validate #{} #{}) => nil)
-  (fact (validate #{} #{:hi}) => (list 'not (list 'empty? #{:hi})))
-  (fact (validate #{} []) => (list 'not (list 'set? [])))
-  (fact (validate #{String} #{:hi}) =>
+  (fact (check #{} #{}) => nil)
+  (fact (check #{} #{:hi}) => (list 'not (list 'empty? #{:hi})))
+  (fact (check #{} []) => (list 'not (list 'set? [])))
+  (fact (check #{String} #{:hi}) =>
     #{(list 'not (list 'instance? 'String :hi))})
-  (fact (validate #{String} #{"hi" :there}) =>
+  (fact (check #{String} #{"hi" :there}) =>
     #{nil (list 'not (list 'instance? 'String :there))})
-  (fact (validate #{String Keyword} #{:hi}) =>
+  (fact (check #{String Keyword} #{:hi}) =>
     (list 'not (list 'annotate.core/valid-type? #{'Keyword 'String}))))
 (facts "Regular Expressions"
-  (fact (validate #"[a-z]+" "hi") => nil)
-  (fact (validate #"[a-z]+" "hi3") => (comp not nil?)))
+  (fact (check #"[a-z]+" "hi") => nil)
+  (fact (check #"[a-z]+" "hi3") => (comp not nil?)))
 (facts "Values"
   (fact (display-type nil) => nil)
   (fact (display-type 3) => 3)
-  (fact (validate nil nil) => nil)
-  (fact (validate 3 3) => nil))
+  (fact (check nil nil) => nil)
+  (fact (check 3 3) => nil))
 (facts "IFn"
-  (fact (validate (IFn [String => String]) (fn [x] (str "Hello, " x))) => nil)
-  (fact (validate (IFn [=> String] [String => String]) (fn ([] "Hello, world") ([x] (str "Hello, " x)))) =>
+  (fact (check (IFn [String => String]) (fn [x] (str "Hello, " x))) => nil)
+  (fact (check (IFn [=> String] [String => String]) (fn ([] "Hello, world") ([x] (str "Hello, " x)))) =>
     nil)
-  (fact (validate (IFn [String => String]) 39) => (list 'not (list 'ifn? 39))))
+  (fact (check (IFn [String => String]) 39) => (list 'not (list 'ifn? 39))))
 (facts "NonEmpty"
   (fact (display-type (NonEmpty [String])) => (list 'NonEmpty ['String]))
-  (fact (validate (NonEmpty) ["Billy" "Bobby"]) => nil)
-  (fact (validate (NonEmpty [String]) ["Billy" "Bobby"]) => nil)
-  (fact (validate (NonEmpty) []) => (list 'not (list 'seq []))))
+  (fact (check (NonEmpty) ["Billy" "Bobby"]) => nil)
+  (fact (check (NonEmpty [String]) ["Billy" "Bobby"]) => nil)
+  (fact (check (NonEmpty) []) => (list 'not (list 'seq []))))
 (facts "Empty"
   (fact (display-type (Empty Vec)) => (list 'Empty 'Vec))
-  (fact (validate (Empty) []) => nil)
-  (fact (validate (Empty Vec) []) => nil)
-  (fact (validate (Empty) [1 2 3]) =>
+  (fact (check (Empty) []) => nil)
+  (fact (check (Empty Vec) []) => nil)
+  (fact (check (Empty) [1 2 3]) =>
     (list 'not (list 'empty? [1 2 3]))))
 (facts "Option"
   (fact (display-type (Option String)) => (list 'Option 'String))
-  (fact (validate (Option String) "hi") => nil)
-  (fact (validate (Option String) nil) => nil)
-  (fact (validate (Option String) :hi) =>
+  (fact (check (Option String) "hi") => nil)
+  (fact (check (Option String) nil) => nil)
+  (fact (check (Option String) :hi) =>
     (list
      'and
      (list 'not (list 'instance? 'String :hi))
      (list 'not (list 'nil? :hi)))))
 (facts "Nilable"
   (fact (display-type (Nilable String)) => (list 'Nilable 'String))
-  (fact (validate (Nilable String) "hi") => nil)
-  (fact (validate (Nilable String) nil) => nil)
-  (fact (validate (Nilable String) :hi) =>
+  (fact (check (Nilable String) "hi") => nil)
+  (fact (check (Nilable String) nil) => nil)
+  (fact (check (Nilable String) :hi) =>
     (list
      'and
      (list 'not (list 'instance? 'String :hi))
@@ -138,81 +142,81 @@
 (facts "Count"
   (fact (display-type (Count 5)) => (list 'Count 5))
   (fact (display-type (Count 1 5)) => (list 'Count 1 5))
-  (fact (validate (Count 5) (range 5)) => nil)
-  (fact (validate (Count 1 5) "Billy") => nil)
-  (fact (validate (Count 2 5) []) => (list '< (list 'count []) 2))
-  (fact (validate (Count 2 5) [1]) => (list '< (list 'count [1]) 2))
-  (fact (validate (Count 2 5) [1 2 3 4 5 6]) =>
+  (fact (check (Count 5) (range 5)) => nil)
+  (fact (check (Count 1 5) "Billy") => nil)
+  (fact (check (Count 2 5) []) => (list '< (list 'count []) 2))
+  (fact (check (Count 2 5) [1]) => (list '< (list 'count [1]) 2))
+  (fact (check (Count 2 5) [1 2 3 4 5 6]) =>
     (list '> (list 'count [1 2 3 4 5 '...]) 5))
-  (fact (validate (Count 2 5) (range 10)) =>
+  (fact (check (Count 2 5) (range 10)) =>
     (list '> (list 'count (list 0 1 2 3 4 '...)) 5)))
 (facts "Member"
   (fact (display-type (Member String)) => (list 'Member 'String))
-  (fact (validate (Member String) ["Billy" "Bobby"]) => nil)
-  (fact (validate (Member String) []) => nil)
-  (fact (validate (Member String) [:billy "joey" :bobby]) =>
+  (fact (check (Member String) ["Billy" "Bobby"]) => nil)
+  (fact (check (Member String) []) => nil)
+  (fact (check (Member String) [:billy "joey" :bobby]) =>
     (list
      (list 'not (list 'instance? 'String :billy))
      nil
      (list 'not (list 'instance? 'String :bobby)))))
 (facts "Coll"
   (fact (display-type (Coll Int)) => (list 'Coll 'Int))
-  (fact (validate (Coll String) ["Billy" "Bobby"]) => nil)
-  (fact (validate (Coll String) (list "Billy" "Bobby")) => nil)
-  (fact (validate (Coll Int) 3) => (list 'not (list 'coll? 3)))
-  (fact (validate (Coll Int) nil) => (list 'not (list 'coll? nil))))
+  (fact (check (Coll String) ["Billy" "Bobby"]) => nil)
+  (fact (check (Coll String) (list "Billy" "Bobby")) => nil)
+  (fact (check (Coll Int) 3) => (list 'not (list 'coll? 3)))
+  (fact (check (Coll Int) nil) => (list 'not (list 'coll? nil))))
 (facts "Seq"
   (fact (display-type (Seq Int)) => (list 'Seq 'Int))
-  (fact (validate (Seq) (range 5)) => nil)
-  (fact (validate (Seq Int) (range 5)) => nil)
-  (fact (validate (Seq) (list 1 2 3)) => nil)
-  (fact (validate (Seq String) (range 5)) =>
+  (fact (check (Seq) (range 5)) => nil)
+  (fact (check (Seq Int) (range 5)) => nil)
+  (fact (check (Seq) (list 1 2 3)) => nil)
+  (fact (check (Seq String) (range 5)) =>
     (list
      (list 'not (list 'instance? 'String 0))
      (list 'not (list 'instance? 'String 1))
      (list 'not (list 'instance? 'String 2))
      (list 'not (list 'instance? 'String 3))
      (list 'not (list 'instance? 'String 4))))
-  (fact (validate (Seq) []) => (list 'not (list 'seq? []))))
+  (fact (check (Seq) []) => (list 'not (list 'seq? []))))
 (facts "LazySeq"
   (fact (display-type (LazySeq Int)) => (list 'LazySeq 'Int))
-  (fact (validate (LazySeq) (range 5)) => nil)
-  (fact (validate (LazySeq Int) (range 5)) => nil)
-  (fact (validate (LazySeq) (list 1 2 3)) =>
+  (fact (check (LazySeq) (range 5)) => nil)
+  (fact (check (LazySeq Int) (range 5)) => nil)
+  (fact (check (LazySeq) (list 1 2 3)) =>
     (list 'not (list 'instance? 'LazySeq (list 1 2 3))))
-  (fact (validate (LazySeq String) (range 5)) =>
+  (fact (check (LazySeq String) (range 5)) =>
     (list
      (list 'not (list 'instance? 'String 0))
      (list 'not (list 'instance? 'String 1))
      (list 'not (list 'instance? 'String 2))
      (list 'not (list 'instance? 'String 3))
      (list 'not (list 'instance? 'String 4))))
-  (fact (validate (LazySeq) []) => (list 'not (list 'instance? 'LazySeq []))))
+  (fact (check (LazySeq) []) => (list 'not (list 'instance? 'LazySeq []))))
 (facts "Seqable"
   (fact (display-type (Seqable Int)) => (list 'Seqable 'Int))
-  (fact (validate (Seqable) [1 2 3]) => nil)
-  (fact (validate (Seqable Int) [1 2 3]) => nil)
-  (fact (validate (Seqable Int) (list 1 2 3)) => nil)
-  (fact (validate (Seqable Int) (range 5)) => nil)
-  (fact (validate (Seqable Int) #{1 3 2}) => nil)
-  (fact (validate (Seqable [String Int]) {"a" 1, "b" 2}) => nil)
-  (fact (validate (Seqable) "hello") =>
+  (fact (check (Seqable) [1 2 3]) => nil)
+  (fact (check (Seqable Int) [1 2 3]) => nil)
+  (fact (check (Seqable Int) (list 1 2 3)) => nil)
+  (fact (check (Seqable Int) (range 5)) => nil)
+  (fact (check (Seqable Int) #{1 3 2}) => nil)
+  (fact (check (Seqable [String Int]) {"a" 1, "b" 2}) => nil)
+  (fact (check (Seqable) "hello") =>
     (list 'not (list 'instance? 'Seqable "hello")))
-  (fact (validate (Seqable) nil) => (list 'not (list 'instance? 'Seqable nil)))
-  (fact (validate (Seqable) 3) => (list 'not (list 'instance? 'Seqable 3))))
+  (fact (check (Seqable) nil) => (list 'not (list 'instance? 'Seqable nil)))
+  (fact (check (Seqable) 3) => (list 'not (list 'instance? 'Seqable 3))))
 (facts "NilableColl"
   (fact (display-type (NilableColl Int)) => (list 'Nilable (list 'Coll 'Int)))
-  (fact (validate (NilableColl) [1 2 3]) => nil)
-  (fact (validate (NilableColl Int) [1 2 3]) => nil)
-  (fact (validate (NilableColl) nil) => nil)
-  (fact (validate (NilableColl Int) nil) => nil))
+  (fact (check (NilableColl) [1 2 3]) => nil)
+  (fact (check (NilableColl Int) [1 2 3]) => nil)
+  (fact (check (NilableColl) nil) => nil)
+  (fact (check (NilableColl Int) nil) => nil))
 (facts "CanSeq"
   (fact (display-type (CanSeq Int)) => (list 'CanSeq 'Int))
-  (fact (validate (CanSeq Int) [1 2 3]) => nil)
-  (fact (validate (CanSeq) (list 1 2 3)) => nil)
-  (fact (validate (CanSeq String) nil) => nil)
-  (fact (validate (CanSeq) "hello") => nil)
-  (fact (validate (CanSeq) 42) =>
+  (fact (check (CanSeq Int) [1 2 3]) => nil)
+  (fact (check (CanSeq) (list 1 2 3)) => nil)
+  (fact (check (CanSeq String) nil) => nil)
+  (fact (check (CanSeq) "hello") => nil)
+  (fact (check (CanSeq) 42) =>
     (list
      'and
      (list 'not (list 'instance? 'Seqable 42))
@@ -224,20 +228,20 @@
 (facts "SortedMap"
   (fact (display-type (SortedMap Keyword String)) =>
     (list 'SortedMap ['Keyword 'String]))
-  (fact (validate (SortedMap Keyword String) (sorted-map :a "1")) => nil)
-  (fact (validate (SortedMap Keyword String) (sorted-map (quote a) "1")) =>
+  (fact (check (SortedMap Keyword String) (sorted-map :a "1")) => nil)
+  (fact (check (SortedMap Keyword String) (sorted-map (quote a) "1")) =>
     (list [(list 'not (list 'instance? 'Keyword 'a)) nil])))
 (facts "KwA"
   (fact (display-type (KwA :method Named :timeout Int)) =>
     (list 'KwA :method 'Named :timeout 'Int))
-  (fact (validate (KwA :method Named :timeout Int) {:method :POST}) => nil)
-  (fact (validate (KwA :method Named :timeout Int) {:timeout 100, :method :POST}) =>
+  (fact (check (KwA :method Named :timeout Int) {:method :POST}) => nil)
+  (fact (check (KwA :method Named :timeout Int) {:timeout 100, :method :POST}) =>
     nil)
-  (fact (validate (KwA :method Named :timeout Int) {:method "DELETE", :redirects 3}) =>
+  (fact (check (KwA :method Named :timeout Int) {:method "DELETE", :redirects 3}) =>
     nil)
-  (fact (validate (KwA :method Named :timeout Int) {}) => nil)
-  (fact (validate (KwA :method Named :timeout Int) nil) => nil)
-  (fact (validate (KwA :method Named :timeout Int) {:timeout 50.0}) =>
+  (fact (check (KwA :method Named :timeout Int) {}) => nil)
+  (fact (check (KwA :method Named :timeout Int) nil) => nil)
+  (fact (check (KwA :method Named :timeout Int) {:timeout 50.0}) =>
     (list
      'and
      {:timeout (list 'not (list 'integer? 50.0))}
@@ -245,23 +249,23 @@
 (facts "Pairs"
   (fact (display-type (Pairs :method Named :timeout Int)) =>
     (list 'Pairs :method 'Named :timeout 'Int))
-  (fact (validate (Pairs :method Named :timeout Int) (list :timeout 50 :method :POST)) =>
+  (fact (check (Pairs :method Named :timeout Int) (list :timeout 50 :method :POST)) =>
     nil)
-  (fact (validate (Pairs :method Named :timeout Int) (list :timeout 50 :method "POST" :redirects 3)) =>
+  (fact (check (Pairs :method Named :timeout Int) (list :timeout 50 :method "POST" :redirects 3)) =>
     nil)
-  (fact (validate (Pairs :method Named :timeout Int) (list :timeout "50")) =>
+  (fact (check (Pairs :method Named :timeout Int) (list :timeout "50")) =>
     {:timeout (list 'not (list 'integer? "50"))})
-  (fact (validate (Pairs :method Named :timeout Int) (list)) => nil))
+  (fact (check (Pairs :method Named :timeout Int) (list)) => nil))
 (facts "Subset"
   (fact (display-type (Subset #{:warn :error})) => (list 'Subset #{:warn :error}))
-  (fact (validate (Subset #{:warn :error}) #{:warn :error}) => nil)
-  (fact (validate (Subset #{:warn :error}) #{:error}) => nil)
-  (fact (validate (Subset #{:warn :error}) #{}) => nil)
-  (fact (validate (Subset #{:warn :error}) #{:fatal :error}) =>
+  (fact (check (Subset #{:warn :error}) #{:warn :error}) => nil)
+  (fact (check (Subset #{:warn :error}) #{:error}) => nil)
+  (fact (check (Subset #{:warn :error}) #{}) => nil)
+  (fact (check (Subset #{:warn :error}) #{:fatal :error}) =>
     (list 'not (list 'clojure.set/subset? #{:fatal :error} #{:warn :error}))))
 (facts "ExMsg"
-  (fact (validate (ExMsg "Fail!") (Exception. "Fail!")) => nil)
-  (fact (validate (ExMsg (Option String)) (Exception.)) => nil)
-  (fact (validate (ExMsg #"\d+") (Exception. "1234")) => nil)
-  (fact (validate (ExMsg String) :fail) =>
+  (fact (check (ExMsg "Fail!") (Exception. "Fail!")) => nil)
+  (fact (check (ExMsg (Option String)) (Exception.)) => nil)
+  (fact (check (ExMsg #"\d+") (Exception. "1234")) => nil)
+  (fact (check (ExMsg String) :fail) =>
     (list 'not (list 'instance? 'Exception :fail))))

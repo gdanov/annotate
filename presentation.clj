@@ -19,23 +19,23 @@
 ;; @@
 
 ;; @@
-(validate String "Billy")
+(check String "Billy")
 ;; @@
 
 ;; @@
-(validate String :Billy)
+(check String :Billy)
 ;; @@
 
 ;; @@
-(validate Int 42)
+(check Int 42)
 ;; @@
 
 ;; @@
-(validate 1 1)
+(check 1 1)
 ;; @@
 
 ;; @@
-(validate 1 2)
+(check 1 2)
 ;; @@
 
 ;; **
@@ -43,31 +43,31 @@
 ;; **
 
 ;; @@
-(validate [true] [true true])
+(check [true] [true true])
 ;; @@
 
 ;; @@
-(validate [true] [])
+(check [true] [])
 ;; @@
 
 ;; @@
-(validate [true] [true false true])
+(check [true] [true false true])
 ;; @@
 
 ;; @@
-(validate [String] ["Billy" "Bobby"])
+(check [String] ["Billy" "Bobby"])
 ;; @@
 
 ;; @@
-(validate [String] ["Billy" "Bobby" :Franky])
+(check [String] ["Billy" "Bobby" :Franky])
 ;; @@
 
 ;; @@
-(validate [Int] (range 100))
+(check [Int] (range 100))
 ;; @@
 
 ;; @@
-(validate [[Keyword Int]] [[:Joey 10] [:Billy 9]])
+(check [[Keyword Int]] [[:Joey 10] [:Billy 9]])
 ;; @@
 
 ;; **
@@ -75,11 +75,11 @@
 ;; **
 
 ;; @@
-(validate #{Keyword} #{:Billy :Bobby})
+(check #{Keyword} #{:Billy :Bobby})
 ;; @@
 
 ;; @@
-(validate #{Keyword} #{:Billy "Bobby"})
+(check #{Keyword} #{:Billy "Bobby"})
 ;; @@
 
 ;; @@
@@ -91,11 +91,11 @@
 ;; **
 
 ;; @@
-(validate {Keyword String} {:name "Billy", :email "billy@gmail.com"})
+(check {Keyword String} {:name "Billy", :email "billy@gmail.com"})
 ;; @@
 
 ;; @@
-(validate {Keyword String} {:name :Billy, :email "billy@gmail.com"})
+(check {Keyword String} {:name :Billy, :email "billy@gmail.com"})
 ;; @@
 
 ;; @@
@@ -108,29 +108,29 @@
 ;; @@
 
 ;; @@
-(validate User {:name "Billy"
-                :address {:city "San Diego"
-                          :state "CA"}
-                :likes [:biking :hiking]
-                :age 36})
+(check User {:name "Billy"
+             :address {:city "San Diego"
+                       :state "CA"}
+             :likes [:biking :hiking]
+             :age 36})
 ;; @@
 
 ;; @@
-(validate User {:name "Billy"
-                :address {:city "San Diego"
-                          :state "CA"}})
+(check User {:name "Billy"
+             :address {:city "San Diego"
+                       :state "CA"}})
 ;; @@
 
 ;; @@
-(validate User {:name :Billy
-                :email "billy@example.org"
-                :address {:city "San Diego"
-                          :state :CA}
-                :likes [:biking "hiking"]})
+(check User {:name :Billy
+             :email "billy@example.org"
+             :address {:city "San Diego"
+                       :state :CA}
+             :likes [:biking "hiking"]})
 ;; @@
 
 ;; @@
-(validate {"name" String, 'age Int} {"name" "Billy", 'age 36})
+(check {"name" String, 'age Int} {"name" "Billy", 'age 36})
 ;; @@
 
 ;; @@
@@ -142,11 +142,11 @@
 ;; **
 
 ;; @@
-(validate (Pred odd?) 3)
+(check (Pred odd?) 3)
 ;; @@
 
 ;; @@
-(validate (Pred empty?) [1])
+(check (Pred empty?) [1])
 ;; @@
 
 ;; **
@@ -158,11 +158,11 @@
 ;; @@
 
 ;; @@
-(validate CVV "123")
+(check CVV "123")
 ;; @@
 
 ;; @@
-(validate CVV "a12")
+(check CVV "a12")
 ;; @@
 
 ;; **
@@ -170,15 +170,15 @@
 ;; **
 
 ;; @@
-(validate (U Keyword Symbol String) :billy)
+(check (U Keyword Symbol String) :billy)
 ;; @@
 
 ;; @@
-(validate (U Keyword Symbol String) "billy")
+(check (U Keyword Symbol String) "billy")
 ;; @@
 
 ;; @@
-(validate (U Keyword String) 5)
+(check (U Keyword String) 5)
 ;; @@
 
 ;; **
@@ -186,11 +186,11 @@
 ;; **
 
 ;; @@
-(validate (I Int (Pred even?)) 2)
+(check (I Int (Pred even?)) 2)
 ;; @@
 
 ;; @@
-(validate (I Int (Pred even?)) 3)
+(check (I Int (Pred even?)) 3)
 ;; @@
 
 ;; **
@@ -247,11 +247,11 @@
 ;; @@
 
 ;; @@
-(with-validation (append* "hi" " there"))
+(with-checking (append* "hi" " there"))
 ;; @@
 
 ;; @@
-(with-validation (append* "hi" :there))
+(with-checking (append* "hi" :there))
 ;; @@
 
 ;; @@
@@ -340,15 +340,15 @@
 ;; @@
 
 ;; @@
-(validate {:first-name (NonEmpty String)
+(check {:first-name (NonEmpty String)
            :age Int}
           {:first-name ""})
 ;; @@
 
 ;; @@
-(-> (validate {:first-name (NonEmpty String)
-               :age Int}
-              {:first-name ""})
+(-> (check {:first-name (NonEmpty String)
+            :age Int}
+           {:first-name ""})
     (friendly {:first-name (label "First name is invalid" "First name is missing")
                :age (label "Age is invalid" "Age not found")}))
 ;; @@

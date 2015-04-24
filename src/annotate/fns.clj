@@ -1,11 +1,11 @@
 (ns annotate.fns
-  "Validating defn and fn forms."
+  "Type checking defn and fn forms."
   (:require annotate.types)
   (:use [annotate core util]))
 
-(defn- add-validation
-  "Add validation to a fn definition by replacing the params binding
-  vector and wrapping the body with validation code."
+(defn- add-checking
+  "Add type checking to a fn definition by replacing the params binding
+  vector and wrapping the body with type checking code."
   [n [input-types output-type] params body cond-sym]
   (let [input-syms
         (map (fn [x] (if (= x '&) x (gensym "input")))
@@ -32,10 +32,10 @@
                     (remove-amp input-syms))]
     `(~params-bindings
       (when ~cond-sym
-        (validate* (str ~n " input(s)") ~@input-type-pairs))
+        (check* (str ~n " input(s)") ~@input-type-pairs))
       (let [output# (let ~renamed-bindings ~@body)]
         (when ~cond-sym
-          (validate* (str ~n " output") ~output-type output#))
+          (check* (str ~n " output") ~output-type output#))
         output#))))
 
 (defn- defn*
@@ -46,12 +46,12 @@
         params-body (drop 2 pb)
         fq-name `(fq-ns (var ~n))
         b (if (vector? params)
-            (add-validation fq-name (parse-arglist t) params (remove-pre-post body) cond-sym)
+            (add-checking fq-name (parse-arglist t) params (remove-pre-post body) cond-sym)
             (->> params-body
                  (interleave t)
                  (partition 2)
                  (map (fn [[t [params & body]]]
-                        (add-validation fq-name (parse-arglist t) params (remove-pre-post body) cond-sym)))))
+                        (add-checking fq-name (parse-arglist t) params (remove-pre-post body) cond-sym)))))
         arglists (if (vector? params) params
                      (map first params-body))]
     `(do
@@ -68,7 +68,7 @@
   vector forms. Enable validation by calling inside the with-validation
   macro. Pre/post conditions are removed."
   [n t & args]
-  (defn* n t args 'annotate.core/*validation-enabled*))
+  (defn* n t args 'annotate.core/*checking-enabled*))
 
 (defmacro defna
   "Define annotated function.
@@ -83,9 +83,9 @@
      (var ~n)))
 
 (defmacro defnv
-  "Define validated function.
+  "Define a type checked function.
 
-  Like defn' but inputs/output are always validated."
+  Like defn' but inputs/output are always type checked."
   [n t & args]
   (defn* n t args true))
 
@@ -94,7 +94,7 @@
   function. Type annotations for fns must be wrapped in vectors or
   lists. Lists indicate a multi-arty fn and should contain two or more
   vector forms. Set the system property annotate.typecheck to 'on' to
-  generate an always validated function, or to 'off' to generate an
+  generate an always type checked function, or to 'off' to generate an
   annotated only function.  Defaults to 'off'. Pre/post conditions are
   removed."
   [n t & args]
@@ -117,11 +117,11 @@
   (let [[params & body] args
         fn-name (if n `'~n "anonymous")
         b (if (vector? params)
-            (add-validation fn-name (parse-arglist t) params body cond-sym)
+            (add-checking fn-name (parse-arglist t) params body cond-sym)
             (->> (interleave t args)
                  (partition 2)
                  (map (fn [[t [params & body]]]
-                        (add-validation fn-name (parse-arglist t) params body cond-sym)))))]
+                        (add-checking fn-name (parse-arglist t) params body cond-sym)))))]
     (if n
       `(fn ~n ~@b)
       `(fn ~@b))))
@@ -133,7 +133,7 @@
   contain two or more vector forms."
   [n-or-t & args]
   (let [[n t args] (parse-fn-args n-or-t args)]
-    (fn-internal n t args 'annotate.core/*validation-enabled*)))
+    (fn-internal n t args 'annotate.core/*checking-enabled*)))
 
 (defmacro fna
   "Define annotated anonymous function.
@@ -147,9 +147,9 @@
       `(fn ~args))))
 
 (defmacro fnv
-  "Define validated anonymous function.
+  "Define a type checked anonymous function.
 
-  Like fn' but inputs/output are always validated."
+  Like fn' but inputs/output are always type checked."
   [n-or-t & args]
   (let [[n t args] (parse-fn-args n-or-t args)]
     (fn-internal n t args true)))
@@ -159,7 +159,7 @@
   name of the anonymous function. Type annotations for fns must be
   wrapped in vectors or lists. Lists indicate a multi-arty fn and should
   contain two or more vector forms.  Set the system property
-  annotate.typecheck to 'on' to generate an always validated function,
+  annotate.typecheck to 'on' to generate an always type checked function,
   or to 'off' to generate an annotated only function.  Defaults to
   'off'."
   [n-or-t & args]
