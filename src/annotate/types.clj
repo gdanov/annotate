@@ -80,7 +80,7 @@
   [{:keys [pred-sym pred]} to-coll this that]
   (if-not (pred that)
     `(~'not (~pred-sym ~(truncate that)))
-    (condp = (count this)
+    (case (count this)
       0 (validate-seqable-0 this that)
       1 (validate-seqable-1 to-coll this that)
       (if (not= (count this) (count that))
@@ -167,19 +167,19 @@
                                  (valid-type? v)))
                  this)))
   (validate [this that]
-    (if-not (valid-type? this)
-      (not-valid-type this)
-      (if-not (map? that)
-        `(~'not (~'map? ~(truncate that)))
-        (let [kv-pairs (sort-map-by-keys this)
-              fixed-key-res
-              (validate-fixed-keys kv-pairs that)
-              generic-type-res
-              (validate-generic-type kv-pairs that)]
-          (when (or (seq fixed-key-res)
-                    (seq generic-type-res))
-            (->> (concat fixed-key-res generic-type-res)
-                 (into {})))))))
+    (cond (not (valid-type? this)) (not-valid-type this)
+          (not (map? that)) `(~'not (~'map? ~(truncate that)))
+          (empty? this) (when-not (empty? that)
+                          `(~'not (~'empty? ~(truncate that))))
+          :else (let [kv-pairs (sort-map-by-keys this)
+                      fixed-key-res
+                      (validate-fixed-keys kv-pairs that)
+                      generic-type-res
+                      (validate-generic-type kv-pairs that)]
+                  (when (or (seq fixed-key-res)
+                            (seq generic-type-res))
+                    (->> (concat fixed-key-res generic-type-res)
+                         (into {}))))))
 
   IPersistentList
   (display-type [this]
@@ -205,13 +205,11 @@
   (valid-type? [this]
     (and (< (count this) 2) (every? valid-type? this)))
   (validate [this that]
-    (if-not (valid-type? this)
-      (not-valid-type this)
-      (if-not (set? that)
-        `(~'not (~'set? ~(truncate that)))
-        (condp = (count this)
-          0 (validate-seqable-0 this that)
-          1 (validate-seqable-1 set this that)))))
+    (cond (not (valid-type? this)) (not-valid-type this)
+          (not (set? that)) `(~'not (~'set? ~(truncate that)))
+          :else (case (count this)
+                  0 (validate-seqable-0 this that)
+                  1 (validate-seqable-1 set this that))))
 
   Var
   (display-type [this] (-> this meta :name))

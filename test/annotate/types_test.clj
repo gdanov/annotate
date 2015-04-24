@@ -57,10 +57,13 @@
   (fact (validate {(optional-key :a) String} {:b "hi"}) => nil)
   (fact (validate {(optional-key :a) String} {:b "hi", :a "there"}) => nil)
   (fact (validate {:name String, String String} {:name "Bob"}) =>
-    (list 'not (list 'annotate.core/valid-type? {:name 'String, 'String 'String}))))
+        (list 'not (list 'annotate.core/valid-type? {:name 'String, 'String 'String})))
+  (fact (validate {} {}) => nil)
+  (fact (validate {} {:name "David"}) => (list 'not (list 'empty? {:name "David"}))))
 (facts "Vectors"
   (fact (display-type [String]) => ['String])
   (fact (validate [] []) => nil)
+  (fact (validate [] [:hi]) => (list 'not (list 'empty? [:hi])))
   (fact (validate [] #{}) => (list 'not (list 'vector? #{})))
   (fact (validate [String] []) => nil)
   (fact (validate [String] ["hi"]) => nil)
@@ -74,6 +77,7 @@
 (facts "Lists"
   (fact (display-type (list String)) => (list 'String))
   (fact (validate (list) (list)) => nil)
+  (fact (validate (list) (list 1)) => (list 'not (list 'empty? (list 1))))
   (fact (validate (list) #{}) => (list 'not (list 'list? #{})))
   (fact (validate (list String) (list)) => nil)
   (fact (validate (list String) (list "hi")) => nil)
