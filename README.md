@@ -38,6 +38,45 @@ Let's take a look at some basic types.  All the built-in types can be found in [
 (use '[annotate core types])
 ```
 
+### Classes
+
+The easiest way to check if a value is a string or keyword is to reference the class in your type. For example:
+
+```clojure
+(check String "hello")
+;; nil
+
+(check String :billy)
+;; (not (instance? String :billy))
+
+(check Keyword :billy)
+;; nil
+```
+
+The [Keyword](http://roomkey.github.io/annotate/annotate.types.html#var-Keyword) type is defined in [annotate.types](http://roomkey.github.io/annotate/annotate.types.html), and references clojure.lang.Keyword. The `String` type is a reference to `java.lang.String`, and is automatically imported in all Clojure code.
+
+### Scalar values
+
+Scalar values indicate a type with exactly one value.
+
+```clojure
+(check 1 1)
+;; nil
+
+(check 1 2)
+;; (not= 1 2)
+```
+
+### Any
+
+The [Any](http://roomkey.github.io/annotate/annotate.types.html#var-Any) type can be used to describe any possible value.
+
+```clojure
+(check Any 3)
+(check Any "hello")
+(check Any :billy)
+```
+
 ### Maps
 
 There are three different ways to express the shape of a map in annotate.
@@ -68,7 +107,6 @@ The output from each function is printed on the line beneath the code, and shown
 (check M {:name :Billy})
 ;; {:name (not (instance? String :Billy))}
 ```
-The [Keyword](http://roomkey.github.io/annotate/annotate.types.html#var-Keyword) type is defined in [annotate.types](http://roomkey.github.io/annotate/annotate.types.html), and references clojure.lang.Keyword. The `String` type is a reference to `java.lang.String`, and is automatically imported in all Clojure code.
 
 Notice that the empty map is valid for this type, but a map whose values are Clojure keywords, are not. Also, the error that is returned is a Clojure data structure.
 
@@ -187,21 +225,6 @@ There are many types that can be used to define a sequence of values.  The most 
 
 (check (NilableColl Int) "Billy")
 ;; (and (not (coll? "Billy")) (not (nil? "Billy")))
-```
-
-### Scalar values
-
-Scalar values require no special wrapping.
-
-```clojure
-(check 1 1)
-;; nil
-
-(check 1 2)
-;; (not= 1 2)
-
-(check [true] [true true])
-;; nil
 ```
 
 ### Predicates
