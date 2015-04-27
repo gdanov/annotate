@@ -1,4 +1,4 @@
-![Logo](https://raw.githubusercontent.com/roomkey/annotate/master/roomkey-logo-dark.png)
+![Room Key](https://raw.githubusercontent.com/roomkey/annotate/master/roomkey-logo-dark.png)
 
 # annotate
 
