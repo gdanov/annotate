@@ -1,5 +1,5 @@
 (ns annotate.fns
-  "Type checking defn and fn forms."
+  "Type annotations/checking for defn and fn forms."
   (:require annotate.types)
   (:use [annotate core util]))
 
@@ -39,8 +39,8 @@
         output#))))
 
 (defn- defn*
-  "Define a function with validation, add type annotation, and preserve
-  expected arglists.  Returns the new var."
+  "Define a function with type checking, add type annotation, and
+  preserve expected arglists. Returns the new var."
   [n t args cond-sym]
   (let [[doc-string attr-map params & body :as pb] (parse-doc-attr-map args)
         params-body (drop 2 pb)
@@ -65,7 +65,7 @@
   "Define a function, passing the type annotation after the name of the
   function. Type annotations for fns must be wrapped in vectors or
   lists. Lists indicate a multi-arty fn and should contain two or more
-  vector forms. Enable validation by calling inside the with-validation
+  vector forms. Enable type checking by calling inside the with-checking
   macro. Pre/post conditions are removed."
   [n t & args]
   (defn* n t args 'annotate.core/*checking-enabled*))
@@ -73,7 +73,7 @@
 (defmacro defna
   "Define annotated function.
 
-  Like defn', but without validation. Source code is not modified in any
+  Like defn', but without type checking. Source code is not modified in any
   way."
   [n t & args]
   `(do
@@ -111,8 +111,8 @@
       `(defna ~n ~t ~@args))))
 
 (defn- fn-internal
-  "Define a function with validation, add type annotation, and preserve
-  expected arglists.  Returns the new var."
+  "Define a function with type checking, add type annotation, and
+  preserve expected arglists. Returns the new var."
   [n t args cond-sym]
   (let [[params & body] args
         fn-name (if n `'~n "anonymous")
@@ -138,8 +138,8 @@
 (defmacro fna
   "Define annotated anonymous function.
 
-  Like fn', but without validation. Source code is not modified in any
-  way."
+  Like fn', but without type checking. Source code is not modified in
+  any way."
   [n-or-t & args]
   (let [[n t args] (parse-fn-args n-or-t args)]
     (if n
