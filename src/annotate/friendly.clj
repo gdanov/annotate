@@ -10,9 +10,9 @@
   error message."
   ([] (Label. "Invalid input" "Not found"))
   ([err-msg]
-     (Label. err-msg "Not found"))
+   (Label. err-msg "Not found"))
   ([err-msg not-found-msg]
-     (Label. err-msg not-found-msg)))
+   (Label. err-msg not-found-msg)))
 
 (defn friendly
   "Takes an error map and a map of fields to labels. Replaces values in

@@ -21,8 +21,8 @@
 (defmacro defrecorda
   "Define a record with an annotated factory function.
 
-  Like defrecord', but without type checking. Source code is not modified
-  in any way."
+  Like defrecord', but without type checking. Source code is not
+  modified in any way."
   [n t fields & args]
   (defrecord* 'annotate.fns/defna n t fields args))
 
@@ -37,8 +37,8 @@
   "Define a record with a type checked factory function.
 
   Like defrecord', but inputs/output are always type checked. Set the
-  system property annotate.typecheck to 'on' to generate an always
-  type checked function, or to 'off' to generate an annotated only
+  system property annotate.typecheck to 'on' to generate an always type
+  checked function, or to 'off' to generate an annotated only
   function. Defaults to 'off'."
   [n t fields & args]
   (if (typecheck?)

@@ -1,5 +1,7 @@
 (ns annotate.test.midje
-  "Helper functions for testing with Midje."
+  "Helper functions for testing with Midje.
+
+  Note: You must add Midje to your project's dependency vector."
   (:use midje.sweet))
 
 (defn- gen-checking-fact

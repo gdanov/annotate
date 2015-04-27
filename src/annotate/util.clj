@@ -6,10 +6,16 @@
   [prop default]
   (or (System/getProperty prop) default))
 
-(defn array? [x]
+(defn array?
+  "Is the object a Java array?"
+  [x]
   (-> x .getClass .isArray))
 
-(defn fq-ns [v]
+(defn fq-ns
+  "Given a var, returns the name of the var prefixed with it's
+  fully-qualified namespace as a symbol. If the namespaces is
+  clojure.core, only the name of the var is returned."
+  [v]
   (let [{:keys [ns name]} (meta v)]
     (if (= (ns-name ns) 'clojure.core)
       name
@@ -40,13 +46,18 @@
                                  (concat s '(...))
                                  s))))))
 
-(defn truncate-str [s]
+(defn truncate-str
+  "Truncate the string s if the length exceeds 20 characters and add an
+  ellipsis."
+  [s]
   (let [max-length 20]
     (if (> (.length s) max-length)
       (str (subs s 0 max-length) "...")
       s)))
 
-(defn truncate [x]
+(defn truncate
+  "Truncate an object recursively."
+  [x]
   (cond (coll? x) (truncate-coll x)
         (string? x) (truncate-str x)
         :else x))
@@ -130,7 +141,9 @@
     [n-or-t (first args) (rest args)]
     [nil n-or-t args]))
 
-(defn quote-special [form]
+(defn quote-special
+  "Quote special symbols."
+  [form]
   (cond (list? form) (apply list (map quote-special form))
         (vector? form) (mapv quote-special form)
         (= form '=>) ''=>

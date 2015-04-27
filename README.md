@@ -222,6 +222,19 @@ A union implies that the type is composed of one or more types, and that the dat
 ;; (and (not (instance? Keyword 5)) (not (instance? Symbol 5)) (not (instance? String 5)))
 ```
 
+There is a convenience type [Option](http://roomkey.github.io/annotate/annotate.types.html#var-Option) that represents the union of some type and nil.
+
+```clojure
+(check (Option Int) 3)
+;; nil
+
+(check (Option Int) nil)
+;; nil
+
+(check (Option Int) "Billy")
+;; (and (not (integer? "Billy")) (not (nil? "Billy")))
+```
+
 ### Intersection of types
 
 A intersection implies that the type is composed of one or more types, and that the data must conform to all of the types. Types are checked in the order they are passed.

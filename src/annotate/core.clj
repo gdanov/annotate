@@ -1,5 +1,5 @@
 (ns annotate.core
-  "Type annotations with type checking."
+  "Annotate and type check."
   (:use [clojure.pprint :only [pprint]])
   (:require [clojure.string :as string]))
 
