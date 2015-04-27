@@ -204,6 +204,33 @@ Scalar values require no special wrapping.
 ;; nil
 ```
 
+### Predicates
+
+The [Pred](http://roomkey.github.io/annotate/annotate.types.html#var-Pred) type allows for arbitrary logic when type checking. It takes a predicate function and type checks if the function returns a truthy value.
+
+```clojure
+(check (Pred odd?) 3)
+;; nil
+
+(check (Pred odd?) 2)
+;; (not (odd? 2))
+```
+
+### Regular expressions
+
+Regular expressions are valid types in annotate. The data being checked must be a string and match the pattern.
+
+```clojure
+(check #"[a-z]+" "hi")
+;; nil
+
+(check #"[a-z]+" "hi there")
+;; (not (re-matches #"[a-z]+" "hi there"))
+
+(check #"[a-z]+" :billy)
+;; (not (string? :billy))
+```
+
 ### Union of types
 
 A union implies that the type is composed of one or more types, and that the data only need conform to at most one of the types. Types are checked in the order they are passed.
@@ -245,18 +272,6 @@ A intersection implies that the type is composed of one or more types, and that 
 
 (check (I Int (Pred even?)) 3)
 ;; (not (even? 3))
-```
-
-### Predicates
-
-The [Pred](http://roomkey.github.io/annotate/annotate.types.html#var-Pred) type allows for arbitrary logic when type checking. It takes a predicate function and type checks if the function returns a truthy value.
-
-```clojure
-(check (Pred odd?) 3)
-;; nil
-
-(check (Pred odd?) 2)
-;; (not (odd? 2))
 ```
 
 ### Functions
@@ -377,7 +392,7 @@ You should consider using `defn$` first, as it can be used to provide type check
 
 Annotate provides four variations of [fn](http://clojuredocs.org/clojure.core/fn): [fn'](http://roomkey.github.io/annotate/annotate.fns.html#var-fn.27), [fna](http://roomkey.github.io/annotate/annotate.fns.html#var-fna), [fnv](http://roomkey.github.io/annotate/annotate.fns.html#var-fnv), and [fn$](http://roomkey.github.io/annotate/annotate.fns.html#var-fn.24).
 
-There behavior is identical to the `defn` variations.
+Their behavior is identical to the `defn` variations.
 
 ```clojure
 ((fnv [String => String] [x] x) "Bob")
@@ -427,6 +442,25 @@ Annotate allows you to wrap existing functions outside of your control in a type
 ```
 
 Notice the usage of the [Pairs](http://roomkey.github.io/annotate/annotate.types.html#var-Pairs) type to represent keyword arguments. This is due to a technical limitation, but provides the same behavior as using [KwA](http://roomkey.github.io/annotate/annotate.types.html#var-KwA) for a function under your control.
+
+### Records
+
+Annotate provides four variations of [defrecord](http://clojuredocs.org/clojure.core/defrecord): [defrecord'](http://roomkey.github.io/annotate/annotate.records.html#var-defrecord.27), [defrecorda](http://roomkey.github.io/annotate/annotate.records.html#var-defrecorda), [defrecordv](http://roomkey.github.io/annotate/annotate.records.html#var-defrecordv), and [defrecord$](http://roomkey.github.io/annotate/annotate.records.html#var-defrecord.24).
+
+Their behavior is identical to the `defn` variations.
+
+Note: The only type checking that occurs is on the generated constructor function.
+
+```clojure
+(defrecordv User [String String]
+  [first-name last-name])
+
+(->User "Billy" "Bob")
+;; #user.User{:first-name "Billy", :last-name "Bob"}
+
+(->User :billy :bob)
+;; ExceptionInfo Failed to type check user/->User input(s): (not (instance? String :billy)), (not (instance? String :bob))
+```
 
 ### Friendly errors
 
