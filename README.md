@@ -225,11 +225,23 @@ There are many types that can be used to define a sequence of values.  The most 
 (check (NilableColl Int) [1 2 3])
 ;; nil
 
+(check (NilableColl Int) (range 10))
+;; nil
+
+(check (NilableColl Int) #{1 2 3})
+;; nil
+
+(check (NilableColl Int) (list 1 2 3))
+;; nil
+
 (check (NilableColl Int) nil)
 ;; nil
 
 (check (NilableColl Int) "Billy")
 ;; (and (not (coll? "Billy")) (not (nil? "Billy")))
+
+(check (NilableColl String) ["Billy" :Bobby])
+;; (and (nil (not (instance? String :Bobby))) (not (nil? ["Billy" :Bobby])))
 ```
 
 ### Predicates
