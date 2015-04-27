@@ -73,8 +73,13 @@ The [Any](http://roomkey.github.io/annotate/annotate.types.html#var-Any) type ca
 
 ```clojure
 (check Any 3)
+;; nil
+
 (check Any "hello")
+;; nil
+
 (check Any :billy)
+;; nil
 ```
 
 ### Maps
