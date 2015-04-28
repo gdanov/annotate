@@ -209,6 +209,9 @@ Notice that a `nil` is returned in the position where a particular element type 
 ```clojure
 (check [] [])
 ;; nil
+
+(check [] [1 2 3])
+;; (not (empty? [1 2 3]))
 ```
 
 ### Lists
@@ -229,8 +232,14 @@ There are two different patterns for expressing the shape of a set in annotate.
 (check #{Keyword} #{})
 ;; nil
 
+(check #{Keyword} #{"hello"})
+;; #{(not (instance? Keyword "hello"))}
+
 (check #{} #{})
 ;; nil
+
+(check #{} #{1 2 3})
+;; (not (empty? #{1 2 3}))
 ```
 
 ### Sequences
