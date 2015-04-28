@@ -2,12 +2,16 @@
 
 # annotate
 
+Annotate is a library for adding type annotations to functions and checking those types at runtime.
+
 ## Purpose
 
 * Documenting function input and output types.
 * Catching bugs that occur when unexpected data is passed to or returned from a function.
 * Validating user data (e.g., data submitted via a form or passed via an API).
 * Providing a lingua franca for describing the shape of Clojure data.
+
+## Rationale
 
 Currently there are two projects that offer similar functionality.
 
@@ -16,7 +20,19 @@ Currently there are two projects that offer similar functionality.
 
 Annotate is in the same category as Schema, that is, runtime data validation.  We do, however, attempt to reuse many of the conventions from core.typed (e.g., all types begin with an uppercase letter) as well as specific names from core.typed (e.g., [U](http://roomkey.github.io/annotate/annotate.types.html#var-U) for the union of two or more types).
 
-Annotate was written to provide a consistent and rich out-the-box experience for developers interested in adding types to their functions.  Another primary objective is to provide a means of checking types during development and testing, while generating code that incurs no performance penalty in production.
+Annotate was written to provide a consistent and rich out-the-box experience for developers interested in adding types to their functions. Another primary objective is to provide a means of checking types during development and testing, while generating code that incurs no performance penalty in production.
+
+So how does annotate differ from Schema?
+
+* `defn` forms do not require a namespace prefix.
+* Comprehensive set of types, including: `Keyword`, `Int`, `Symbol`, `Ratio`, `Atom`, `Date`, `UUID`, `Regex`, `Vec`, `Set`, `List`, `Option`, `Count`, `Empty`, `NonEmpty`, `Coll`, `Seq`, `LazySeq`, `Seqable`, `NillableColl`, `CanSeq`, `Queue`, `SortedSet`, `SortedMap`, `U` (union), `I` (intersection), `Pred` (predicate), and more.
+* Multi-arity functions can have different return types per arity.
+* Type annotations for functions are not commingled with arglists.
+* Automatic truncation of collections and strings when generating error messages.
+* Vector literals represent vectors.
+* Keyword arguments are supported.
+* Types are displayed tersely by default. For example, `String` instead of `java.lang.String`.
+* Ability to annotate functions outside your control.
 
 ## Installation
 
@@ -32,7 +48,7 @@ http://roomkey.github.io/annotate
 
 Types in annotate are comprised of Clojure data, and can be composed at runtime to produce more complex types (or less complex types) as needed.  You should be able to express your data purely by composing the existing types provided by annotate.  All types extend the [Typeable](http://roomkey.github.io/annotate/annotate.core.html#var-Typeable) protocol in [annotate.core](http://roomkey.github.io/annotate/annotate.core.html).
 
-Let's take a look at some basic types.  All the built-in types can be found in [annotate.types](http://roomkey.github.io/annotate/annotate.types.html).  The check function, which is used internally, can be found in [annotate.core](http://roomkey.github.io/annotate/annotate.core.html). We'll need to refer that as well for the examples.
+Let's take a look at some basic types.  All the built-in types can be found in [annotate.types](http://roomkey.github.io/annotate/annotate.types.html).  The check function, which is used internally, can be found in [annotate.core](http://roomkey.github.io/annotate/annotate.core.html). We'll need to refer that as well for these examples.
 
 ```clojure
 (use '[annotate core types])
@@ -86,7 +102,7 @@ The [Any](http://roomkey.github.io/annotate/annotate.types.html#var-Any) type ca
 
 There are three different ways to express the shape of a map in annotate.
 
-1. A heterogeneous map, that is a map whose keys all conform to a single type, and likewise, whose values all conform to a single type.
+1. A homogeneous map, that is a map whose keys all conform to a single type, and likewise, whose values all conform to a single type.
 2. A map with specific, named keys whose corresponding values conform to a specific type.
 3. An empty map. This type checks against an empty map, and only an empty map.
 
@@ -119,7 +135,7 @@ Notice that the empty map is valid for this type, but a map whose values are Clo
 
 Named maps are maps where the keys are defined upfront.  Keyword, symbol, and string keys are automatically assumed to be required, that is they must be present.  You can also indicate that a key is optional, that is, it does not have to present, by wrapping the key in the `optional-key` function.  Notice that this function is lowercase.  That is because it is a component of a type, and not actually a type itself.
 
-Any keys that are not present in the named map type will be ignored when checking types.  This is intentional, and is often referred to as Row Polymorphism in statically typed languages that support it.
+Any keys that are not present in the named map type will be ignored when checking types. This allows you to specify types only for the keys you care about. This is often referred to as Row Polymorphism in statically typed languages that support it.
 
 ```clojure
 (def User
@@ -159,7 +175,7 @@ Notice that the shape of the error is a map itself. In the case where a key is n
 
 There are three different patterns for expressing the shape of a vector in annotate.
 
-1. Homogenous vectors, where the element represents the type for all elements in the vector. Also type checks against the empty vector.
+1. Homogenous vectors, where the element represents the type for all elements in the vector. The empty vector is a valid value for all homogenous vectors.
 2. A two-tuple, three-tuple, etc. vector, where each element represents the type for that particular position within the fixed length vector.
 3. An empty vector, that type checks against the empty vector, and only the empty vector.
 
@@ -179,7 +195,7 @@ There are three different patterns for expressing the shape of a vector in annot
 ;; nil
 ```
 
-Notice that a `nil` is returned in the position where a particular element type checked, in the case where the data as a whole did not. Also notice that collections are automatically truncated. This is to minimize the possibility of exceptionally large error messages.
+Notice that a `nil` is returned in the position where a particular element type checked, in the case where the data as a whole did not. Collections are automatically truncated to minimize the possibility of exceptionally large error messages.
 
 #### Vector Tuples
 
@@ -203,7 +219,7 @@ Lists have the same behavior as vectors.
 
 There are two different patterns for expressing the shape of a set in annotate.
 
-1. Homogenous sets, where the element represents the type for all elements in the set. Also type checks against the empty set.
+1. Homogenous sets, where the element represents the type for all elements in the set. The empty set is a valid value for all homogenous sets.
 2. An empty set, that type checks against the empty set, and only the empty set.
 
 ```clojure
@@ -312,6 +328,56 @@ A intersection implies that the type is composed of one or more types, and that 
 
 (check (I Int (Pred even?)) 3)
 ;; (not (even? 3))
+```
+
+### Composition of types
+
+In the example below we define a type `Blog` that represents blog posts. Blog posts can have zero or more comments, represented as a vector of type `Comment`.  Comments have a single author, represented as a type `User`.
+
+Since all of our types are just Clojure data, we compose them just like we would any other Clojure data.
+
+```clojure
+(def User
+  {:username String
+   :email #"[^@]+@[^@]+"})
+
+(def Comment
+  {:author User
+   :comment String
+   :posted Date})
+
+(def Blog
+  {:title String
+   :content String
+   :posted Date
+   :comments [Comment]})
+```
+
+Below is some example data that conforms to our type.
+
+```clojure
+(def blog123
+  {:title "Clojure 101"
+   :content "Clojure is a functional..."
+   :posted #inst "2015-01-01"
+   :comments [{:author {:username "funprog" :email "me@example.org"}
+               :comment "Great post!"
+               :posted #inst "2015-01-02T12:30:00"}]})
+
+(check Blog blog123)
+;; nil
+```
+
+We can display our type by calling [display-type](http://roomkey.github.io/annotate/annotate.core.html#var-display-type) on it.
+
+```clojure
+(display-type Blog)
+;; {:comments [{:author {:email #"[^@]+@[^@]+", :username String},
+;;              :comment String,
+;;              :posted Date}],
+;;  :content String,
+;;  :posted Date,
+;;  :title String}
 ```
 
 ### Functions
