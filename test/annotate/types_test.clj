@@ -180,14 +180,12 @@
   (fact (check (Seq) []) => (list 'not (list 'seq? []))))
 (facts "LazySeq"
   (fact (display-type (LazySeq Int)) => (list 'LazySeq 'Int))
-  (fact (check (LazySeq) (range 5)) => nil)
-  (fact (check (LazySeq Int) (range 5)) => nil)
+  (fact (check (LazySeq) (map inc [1 2 3])) => nil)
+  (fact (check (LazySeq Int) (map inc [1 2 3])) => nil)
   (fact (check (LazySeq) (list 1 2 3)) =>
     (list 'not (list 'instance? 'LazySeq (list 1 2 3))))
-  (fact (check (LazySeq String) (range 5)) =>
+  (fact (check (LazySeq String) (map inc [1 2 3])) =>
     (list
-     (list 'not (list 'instance? 'String 0))
-     (list 'not (list 'instance? 'String 1))
      (list 'not (list 'instance? 'String 2))
      (list 'not (list 'instance? 'String 3))
      (list 'not (list 'instance? 'String 4))))

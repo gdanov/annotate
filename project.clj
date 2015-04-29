@@ -11,4 +11,5 @@
                    :codox {:src-dir-uri "https://github.com/roomkey/annotate/blob/master/"
                            :src-linenum-anchor-prefix "L"
                            :output-dir "."
-                           :exclude [annotate.examples]}}})
+                           :exclude [annotate.examples]}}
+             :1.7 {:dependencies [[org.clojure/clojure "1.7.0-beta2"]]}})
