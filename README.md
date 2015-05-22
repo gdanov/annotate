@@ -25,7 +25,7 @@ Annotate was written to provide a consistent and rich out-the-box experience for
 So how does annotate differ from Schema?
 
 * `defn` forms do not require a namespace prefix.
-* Comprehensive set of types, including: `Keyword`, `Int`, `Symbol`, `Ratio`, `Atom`, `Date`, `UUID`, `Regex`, `Vec`, `Set`, `List`, `Option`, `Count`, `Empty`, `NonEmpty`, `Coll`, `Seq`, `LazySeq`, `Seqable`, `NillableColl`, `CanSeq`, `Queue`, `SortedSet`, `SortedMap`, `U` (union), `I` (intersection), `Pred` (predicate), and more.
+* Comprehensive set of types, including: `Keyword`, `Int`, `Symbol`, `Ratio`, `Atom`, `Date`, `UUID`, `Regex`, `Vec`, `Set`, `List`, `Option`, `Count`, `Empty`, `NonEmpty`, `Coll`, `Seq`, `LazySeq`, `Seqable`, `NilableColl`, `CanSeq`, `Queue`, `SortedSet`, `SortedMap`, `U` (union), `I` (intersection), `Pred` (predicate), and more.
 * Multi-arity functions can have different return types per arity.
 * Type annotations for functions are not commingled with arglists.
 * Automatic truncation of collections and strings when generating error messages.
@@ -244,7 +244,7 @@ There are two different patterns for expressing the shape of a set in annotate.
 
 ### Sequences
 
-There are many types that can be used to define a sequence of values.  The most likely to be used is [NillableColl](http://roomkey.github.io/annotate/annotate.types.html#var-NilableColl), which represents a collection of some type or `nil`.
+There are many types that can be used to define a sequence of values.  The most likely to be used is [NilableColl](http://roomkey.github.io/annotate/annotate.types.html#var-NilableColl), which represents a collection of some type or `nil`.
 
 ```clojure
 (check (NilableColl Int) [1 2 3])
@@ -408,7 +408,7 @@ list. Lists indicate a multi-arty fn and should contain two or more vector forms
 NOTE: `defn'`, `defnv`, and `defn$` will remove pre/post conditions from the generated code.
 If you need to mimic the behavior of pre/post conditions use `assert` in the body of your function.
 
-All of the macros for creating type annotated functions are located in [annotate.fns](http://roomkey.github.io/annotate/annotate.fns.html). Let's take a look at some examples.  
+All of the macros for creating type annotated functions are located in [annotate.fns](http://roomkey.github.io/annotate/annotate.fns.html). Let's take a look at some examples.
 
 ```clojure
 (use 'annotate.fns)
