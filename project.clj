@@ -1,4 +1,4 @@
-(defproject com.roomkey/annotate "1.0.0"
+(defproject com.roomkey/annotate "1.0.1"
   :description "Type annotations and type checking."
   :url "https://github.com/roomkey/annotate"
   :license {:name "Eclipse Public License"

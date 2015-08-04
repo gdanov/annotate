@@ -47,6 +47,6 @@
   to 'off'."
   [sym type]
   (if (typecheck?)
-    `(wrap* ~sym ~type 'annotate.fns/fnv)
+    (wrap* sym type 'annotate.fns/fnv)
     `(do (ann ~sym ~(quote-special type))
          (var ~sym))))
