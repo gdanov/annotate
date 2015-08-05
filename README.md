@@ -37,7 +37,7 @@ So how does annotate differ from Schema?
 ## Installation
 
 ```clojure
-[com.roomkey/annotate "1.0.0"]
+[com.roomkey/annotate "1.0.1"]
 ```
 
 ## API Documentation
