@@ -1,13 +1,10 @@
 (ns annotate.examples
-  #?(:clj
-     (:use [annotate core types fns records wrap friendly])
-     :cljs
-     (:require [annotate.core]
-               [annotate.types]
-               [annotate.fns :refer-macros [defna defnv defn']]
-               [annotate.records :refer-macros [defrecordv]]
-               [annotate.wrap]
-               [annotate.friendly])))
+  (:require [annotate.core]
+            [annotate.types]
+            [annotate.fns :refer-macros [defna defnv defn']]
+            [annotate.records :refer-macros [defrecordv]]
+            [annotate.wrap]
+            [annotate.friendly]))
 
 ;; Never type check
 (defna append [String String => String]

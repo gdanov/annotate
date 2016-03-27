@@ -1,15 +1,22 @@
-(ns annotate.util)
+(ns annotate.util
+  #?(:cljs (:require-macros [annotate.util-macro :refer [and-not]])
+     :clj (use [annotate.util-macro :only [and-not]])))
 
 (defn lookup
   "Lookup system property, returning a default value if the property
   cannot be found."
   [prop default]
-  (or (System/getProperty prop) default))
+  #?(:clj
+     (or (System/getProperty prop) default)
+     :cljs
+     (println "util/lookup not implemented!")
+     default))
 
-(defn array?
-  "Is the object a Java array?"
-  [x]
-  (-> x .getClass .isArray))
+#?(:clj ;; exists in cljs
+   (defn array?
+     "Is the object a Java array?"
+     [x]
+     (-> x .getClass .isArray)))
 
 (defn fq-ns
   "Given a var, returns the name of the var prefixed with it's
@@ -50,8 +57,12 @@
   "Truncate the string s if the length exceeds 20 characters and add an
   ellipsis."
   [s]
+  (assert (string? s))
+
   (let [max-length 20]
-    (if (> (.length s) max-length)
+    (if (> #?(:clj (.length s)
+              :cljs (.-length s))
+          max-length)
       (str (subs s 0 max-length) "...")
       s)))
 
@@ -95,10 +106,6 @@
 (defn rest-args? [args]
   (= (first (drop (- (count args) 2) args)) '&))
 
-(defmacro and-not
-  [& forms]
-  `(and ~@(map (fn [form] `(not ~form)) forms)))
-
 (defn arity-match?
   "Do the arities of the arglists and types match?"
   [arglists ts]
@@ -112,10 +119,6 @@
                    arglists ts)
               (every? true?)))))
 
-(defmacro assert-arity-match
-  [sym arglists ts]
-  `(assert (arity-match? ~arglists ~ts) (str ~sym " arity mismatch")))
-
 (defn fix-arglists
   "Restore arglists metadata to the expected value."
   [v arglists]
@@ -127,9 +130,6 @@
 
 (defn remove-amp [xs]
   (remove #(= '& %) xs))
-
-(defmacro lookup-arglists [sym]
-  `(-> (var ~sym) meta :arglists))
 
 (defn typecheck?
   "Is type checking enabled?"
