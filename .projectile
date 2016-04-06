@@ -1,0 +1,6 @@
+-/out
+-/repl-*
+-/build
+-/resources/public/out
+-/target
+-/.*

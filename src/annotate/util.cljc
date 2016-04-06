@@ -2,6 +2,15 @@
   #?(:cljs (:require-macros [annotate.util-macro :refer [and-not]])
      :clj (use [annotate.util-macro :only [and-not]])))
 
+#?(:cljs
+   (do
+    (defn clj-obj?
+      "test if the value is js-object or clj object"
+      [o]
+      (true? (aget (type o) "cljs$lang$type")))
+
+    (defn cljs-obj? [o] (not (clj-obj? o)))))
+
 (defn lookup
   "Lookup system property, returning a default value if the property
   cannot be found."
@@ -16,7 +25,9 @@
    (defn array?
      "Is the object a Java array?"
      [x]
-     (-> x .getClass .isArray)))
+     (-> x .getClass .isArray))
+   :cljs
+   (def array? cljs.core/array?))
 
 (defn fq-ns
   "Given a var, returns the name of the var prefixed with it's
@@ -24,7 +35,7 @@
   clojure.core, only the name of the var is returned."
   [v]
   (let [{:keys [ns name]} (meta v)]
-    (if (= (ns-name ns) 'clojure.core)
+    (if (= (ns-name ns) #?(:clj 'clojure.core :cljs "cljs.core"))
       name
       (symbol (str ns "/" name)))))
 
