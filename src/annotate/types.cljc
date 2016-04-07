@@ -366,12 +366,16 @@
    :cljs (defcan Atom (Pred #(instance? cljs.core.Atom %))))
 #?(:clj (def Date java.util.Date)
    :cljs (def Date (augment-primitive js/Date)))
-#?(:clj (def UUID java.util.UUID))
+#?(:clj (def UUID java.util.UUID)) ;; no UUID in js
 #?(:clj (defcan Regex java.util.regex.Pattern)
    :cljs (def Regex (augment-constructor js/RegExp)))
 
 #?(:clj (def Num java.lang.Number)
-   :cljs (def Num (augment-primitive js/Number)))
+   :cljs (do
+           (def Num (augment-primitive js/Number))
+           ;; Num just adds confusion
+           (def Number Num)))
+
 
 #?(:clj (def Var clojure.lang.Var)
    :cljs (def Var (augment-constructor cljs.core/Var)))

@@ -7,4 +7,4 @@
 
 (println "===== running tests in Script mode ====")
 
-;;(cljs.test/run-tests 'annotate.util-test 'annotate.types-test)
+(cljs.test/run-tests 'annotate.util-test 'annotate.types-test)

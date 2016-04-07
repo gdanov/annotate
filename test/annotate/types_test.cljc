@@ -4,8 +4,8 @@
             [annotate.types
              :refer [U I fixed-key? optional-key required-key Eq Symbol
                      Date Keyword Var NonEmpty Empty Vec Option Nilable Count Member
-                     Coll Num  Int Seq LazySeq Seqable NilableColl CanSeq SortedMap KwA
-                     Named Pairs Subset ExMsg #?(:cljs String) Date Atom Regex]]
+                     Coll Num Int Seq LazySeq Seqable NilableColl CanSeq SortedMap KwA
+                     Named Pairs Subset ExMsg #?@(:cljs [String Number]) Date Atom Regex]]
             #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test :as test :refer-macros [deftest testing is]]))
   #?(:cljs (:require-macros [annotate.types-macro :refer [Pred IFn]])
@@ -67,7 +67,7 @@
 
     (is (= nil (check Date #?(:cljs (js/Date.) :clj (java.util.Date.)))))
 
-    (is (= nil (check Num 123)))
+    (is (= nil (check Number 123)))
     (is (nil? (check Int 50)))
     ;; js fun :)
     #?(:cljs (is (nil? (check Int 50.0))))
@@ -83,23 +83,22 @@
 
 (deftest t-Union
   ;; TODO
-  #?(:clj (is (= (list 'U 'String 'Number) (display-type (U String Number)))))
+  (is (= (list 'U 'String 'Number) (display-type (U String Number))))
   (is (= (list 'not (list 'annotate.core/valid-type? (list 'U))) (check (U) "Billy")))
   ;; TODO
-  #?(:clj (do
-            (is (= nil (check (U (Pred list?) (Pred class?)) (list 1))))
-            (is (= (list
-                     'and
-                     (list 'not (list 'vector? (list 1)))
-                     (list 'not (list 'class? (list 1))))
-                  (check (U (Pred vector?) (Pred class?)) (list 1))))))
+  (is (= nil (check (U (Pred list?) (Pred seq?)) (list 1))))
+  (is (= (list
+           'and
+           (list 'not (list 'string? (list 1)))
+           (list 'not (list 'integer? (list 1))))
+        (check (U (Pred string?) (Pred integer?)) (list 1))))
   ;; TODO numbers are not boxed in js
-  #?(:clj (is (= nil) (check (U nil 3 String) 3))))
+  (is (= nil) (check (U nil 3 String) 3)))
 
 (deftest t-Intersection
   ;; TODO
-  #?(:clj (is (= (list 'I 'Number (list 'Pred 'even?))
-           (display-type (I Number (Pred even?))))))
+  (is (= (list 'I 'Number (list 'Pred 'even?))
+        (display-type (I Number (Pred even?)))))
   (is (= (list 'not (list 'annotate.core/valid-type? (list 'I))) (check (I) 39)))
   (is (= nil (check (I (Pred list?) (Pred seq?)) (quote (1)))))
   (is (= (list 'not (list 'empty? (list 1)))
@@ -113,7 +112,7 @@
 (deftest t-Maps
   ;; TODO cljs.core things are not auto imported or? why is ' not working on Keyword
   (is (= {'Keyword 'String} (display-type {Keyword String})))
-  #?(:clj (is (= {:age 'Long, :name 'String} (display-type {:name String, :age Long}))))
+  (is (= {:age 'Int, :name 'String} (display-type {:name String, :age Int})))
   (is (= (list 'not (list 'map? #{})) (check {Keyword String} #{})))
   (is (= nil (check {Keyword String} {})))
   (is (= {:name (list 'not (list 'instance? 'String :billy))}
@@ -122,10 +121,10 @@
         (check {Keyword String} {"name" "billy"})))
   (is (= {:name 'key-not-found} (check {:name String} {:age 36})))
 
-  #?(:clj (is (= nil (check {:name "David", :age Long} {:age 36, :name "David"}))))
+  (is (= nil (check {:name "David", :age Int} {:age 36, :name "David"})))
 
-  #?(:clj (is (= {:age (list 'not (list 'instance? 'Long :36)), :name 'key-not-found}
-                (check {:name "David", :age Long} {:age :36, :nam "David", "a" :1}))))
+  (is (= {:age (list 'not (list 'integer? :36)), :name 'key-not-found}
+          (check {:name "David", :age Int} {:age :36, :nam "David", "a" :1})))
 
   (is (= nil (check {Keyword String} {:name "David", :age "36"})))
   (is (= {:a 'key-not-found} (check {(required-key :a) String} {:b "hi"})))
