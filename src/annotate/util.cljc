@@ -1,6 +1,18 @@
 (ns annotate.util
-  #?(:cljs (:require-macros [annotate.util-macro :refer [and-not]])
-     :clj (use [annotate.util-macro :only [and-not]])))
+  #?(:cljs (:require-macros [annotate.util :refer [and-not]])))
+
+#?(:clj
+   (do
+     (defmacro and-not
+       [& forms]
+       `(and ~@(map (fn [form] `(not ~form)) forms)))
+
+     (defmacro assert-arity-match
+       [sym arglists ts]
+       `(assert (arity-match? ~arglists ~ts) (str ~sym " arity mismatch")))
+
+     (defmacro lookup-arglists [sym]
+       `(-> (var ~sym) meta :arglists))))
 
 #?(:cljs
    (do

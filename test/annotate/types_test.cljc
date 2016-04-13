@@ -1,15 +1,19 @@
 (ns annotate.types-test
   (:require [annotate.core :refer [display-type check valid-type? display-canonical]]
             [annotate.util :refer [truncate]]
-            [annotate.types
+            [annotate.types :as at
              :refer [U I fixed-key? optional-key required-key Eq Symbol
                      Date Keyword Var NonEmpty Empty Vec Option Nilable Count Member
                      Coll Num Int Seq LazySeq Seqable NilableColl CanSeq SortedMap KwA
-                     Named Pairs Subset ExMsg #?@(:cljs [String Number]) Date Atom Regex]]
+                     Named Pairs Subset ExMsg #?@(:cljs [String Number]) Date Atom Regex
+                     ]
+             ;;TODO understand better "implicit macro loading" from
+             ;;https://github.com/clojure/clojurescript/wiki/Differences-from-Clojure#namespaces
+             ;;#?@(:cljs [:refer-macros [Pred]])
+             #?@(:cljs [:include-macros true])
+             ]
             #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test :as test :refer-macros [deftest testing is]]))
-  #?(:cljs (:require-macros [annotate.types-macro :refer [Pred IFn]])
-     :clj (:require [annotate.types-macro :refer [Pred IFn]]))
   #?(:clj (:import (annotate.types PredicateType IFnType) ;;needed by the Pred macro. can't skip it?
                    )))
 
@@ -18,13 +22,13 @@
      :cljs (symbol "cljs.core" (name sym))))
 
 (deftest t-Pred
-  (is (= (list 'Pred 'even?) (display-type (Pred even?))))
-  (is (= nil (check (Pred even?) 2)))
-  (is (= (list 'not (list 'even? 3))) (check (Pred even?) 3))
+  (is (= (list 'Pred 'even?) (display-type (at/Pred even?))))
+  (is (= nil (check (at/Pred even?) 2)))
+  (is (= (list 'not (list 'even? 3))) (check (at/Pred even?) 3))
   (is (= (list 'not (list (list 'fn ['x] (list '> 'x 0)) -1))
-        (check (Pred (fn [x] (> x 0))) -1)))
+        (check (at/Pred (fn [x] (> x 0))) -1)))
   (is (= (list 'not (list 'annotate.core/valid-type? (list 'Pred :age)))
-        (check (Pred :age) {:age 36}))))
+        (check (at/Pred :age) {:age 36}))))
 
 (deftest t-canonical-primitives
   (testing "clojure primitives"
@@ -86,23 +90,23 @@
   (is (= (list 'U 'String 'Number) (display-type (U String Number))))
   (is (= (list 'not (list 'annotate.core/valid-type? (list 'U))) (check (U) "Billy")))
   ;; TODO
-  (is (= nil (check (U (Pred list?) (Pred seq?)) (list 1))))
+  (is (= nil (check (U (at/Pred list?) (at/Pred seq?)) (list 1))))
   (is (= (list
            'and
            (list 'not (list 'string? (list 1)))
            (list 'not (list 'integer? (list 1))))
-        (check (U (Pred string?) (Pred integer?)) (list 1))))
+        (check (U (at/Pred string?) (at/Pred integer?)) (list 1))))
   ;; TODO numbers are not boxed in js
   (is (= nil) (check (U nil 3 String) 3)))
 
 (deftest t-Intersection
   ;; TODO
   (is (= (list 'I 'Number (list 'Pred 'even?))
-        (display-type (I Number (Pred even?)))))
+        (display-type (I Number (at/Pred even?)))))
   (is (= (list 'not (list 'annotate.core/valid-type? (list 'I))) (check (I) 39)))
-  (is (= nil (check (I (Pred list?) (Pred seq?)) (quote (1)))))
+  (is (= nil (check (I (at/Pred list?) (at/Pred seq?)) (quote (1)))))
   (is (= (list 'not (list 'empty? (list 1)))
-        (check (I (Pred list?) (Pred empty?)) (quote (1))))))
+        (check (I (at/Pred list?) (at/Pred empty?)) (quote (1))))))
 
 (deftest t-Eq
   (is (= (list 'Eq [true]) (display-type (Eq [true]))))
@@ -194,11 +198,11 @@
   (is (= nil) (check 3 3)))
 
 (deftest t-IFn
-  (is (= nil (check (IFn [String => String]) (fn [x] (str "Hello, " x)))))
+  (is (= nil (check (at/IFn [String => String]) (fn [x] (str "Hello, " x)))))
   (is (= nil
-          (check (IFn [=> String] [String => String])
+          (check (at/IFn [=> String] [String => String])
             (fn ([] "Hello, world") ([x] (str "Hello, " x))))))
-  (is (= (list 'not (list 'ifn? 39))) (check (IFn [String => String]) 39)))
+  (is (= (list 'not (list 'ifn? 39))) (check (at/IFn [String => String]) 39)))
 
 (deftest t-NonEmpty
   (is (= (list 'NonEmpty ['String]) (display-type (NonEmpty [String]))))
