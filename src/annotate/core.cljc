@@ -94,6 +94,12 @@
                          (string/join ", "))]
         (throwe (str "Failed to type check " label ": " invalid) res)))))
 
+(defmacro assert*
+  [left right & msg]
+  `(let [err# (check ~left ~right)
+         ~'valid? (nil? err#)]
+     (assert ~'valid? (str ~@msg " \ndetails:\n" err#))))
+
 (defn lazy-check
   "Lazily check that each member of a sequence s is of type t. Throws
   an exception if a realized value is not of type t. Returns a lazy

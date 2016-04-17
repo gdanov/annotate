@@ -1,8 +1,9 @@
 (ns annotate.fns-test
   (:require [annotate.types :as types #?@(:cljs [:refer [String]])]
             [annotate.fns :as fns :include-macros true]
-            #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [deftest testing is]])))
+            [annotate.core :as core]
+            #?(:clj [clojure.test :as test :refer :all]
+               :cljs [cljs.test :as test :refer-macros [deftest testing is]])))
 
 (deftest t-fn
   (is (= "Hello, world" ((fns/fnv [=> String] [] "Hello, world"))))
@@ -37,21 +38,81 @@
 (deftest t-match-arity
   (is (false? "todo")))
 
+(defmethod test/assert-expr 'valid? [msg form]
+  `(let [res# (core/check ~(nth form 1) ~(nth form 2))]
+     (if (nil? res#)
+       (test/do-report {:type :pass})
+       (test/do-report {:type :fail :message "contract check failed"
+                        :expected 'nil :actual res#}))))
+
+(deftest t-a
+  (is (valid? nil nil)))
+
 #?(:clj
-   (deftest t-parse-arg
-     (testing "single arity"
-       (is (= [[['String] 'String]] (fns/parse-args+ '[String => String])))
-       (is (= [[['String 'types/Int] 'String]] (fns/parse-args+ '[String types/Int => String])))
-       (is (= [[[] 'types/Int]] (fns/parse-args+ '[=> types/Int])))
-       (is (= [[["test"] 'Boolean]] (fns/parse-args+ '["test" => Boolean])))
-       (is (thrown? java.lang.AssertionError (fns/parse-args+ '[String =>])))
-       (is (thrown? java.lang.AssertionError (fns/parse-args+ '[String types/Int])))
-       (is (thrown? java.lang.AssertionError (fns/parse-args+ '[=>]))))
-     (testing "1+ arity"
-       (is (= [[['String 'types/Int] 'String]]
-             (fns/parse-args+ '([String types/Int => String]))))
-       (is (= [[['String] 'String] [['String 'types/Int] 'String]]
-             (fns/parse-args+ '([String => String] [String types/Int => String])))))))
+   (do
+     (deftest t-parse-fn-decl*
+       (testing "anonymous fn"
+         (is (thrown? java.lang.AssertionError
+               (fns/parse-fn-decl* '(:fn "alabala" []))))
+         (is (thrown? AssertionError
+               (fns/parse-fn-decl* '(:fn [] true))))
+         (is (thrown? AssertionError
+               (fns/parse-fn-decl* '(:fn [] [] true))))
+
+         ;; in order to have lower maint of tests, the params contract
+         ;; is parsed later. don't want to rewrite all tests once I
+         ;; change how I represent contracts
+         ;; keep data raw as long as possible, compute as late as possible
+         (is (valid? {:name 'a-name :anonymous true
+                      :bodies [{:contract ['_ '_ '_ '=> '_]
+                                :params ['x 'y '& 'z]
+                                :body '(xyz)}]}
+               (fns/parse-fn-decl* '(:fn a-name [_ _ _ => _] [x y & z] xyz))))
+
+         (is (valid? {:anonymous true
+                      :bodies [{:contract ['=>] :params [] :body '(nil)}]}
+               (fns/parse-fn-decl* '(:fn [=>] [] nil))))
+
+         (is (valid? {:bodies [{:body '((+ 1 2) true)}]}
+               (fns/parse-fn-decl* '(:fn [=>] [] (+ 1 2) true))))
+
+         (is (valid? {:anonymous true
+                      :bodies [{:contract '[=>] :params ['x 'y '& 'z] :body '(xyz)}
+                               {:contract '[=>] :params [] :body '()}]}
+               (fns/parse-fn-decl* '(:fn a-name ([ => ] [x y & z] xyz) ([=>] []))))))
+
+       ;; TODO check that key is NOT present
+       ;;(is (nil? (core/check {:anonymous nil} {})))
+       (testing "defn"
+         (is (thrown-with-msg? AssertionError #"Assert failed: defn needs a name"
+               (fns/parse-fn-decl* '(:defn [=> String] [_]))))
+
+         (is (valid? (types/I (types/Pred #(nil? (:anonymous %)))
+                       {:name 'a-name :doc-string "some-doc"
+                        :bodies [{:contract ['=> 'String] :params '[_] :body '(xyz)}]})
+               (fns/parse-fn-decl* '(:defn a-name "some-doc" ^{} [=> String] ^{}
+                                           [_] {:pre [true]} xyz))))
+         ;; NOTE multiarity syntax is different from the original
+         (is (valid? {:name 'name
+                      :bodies [{:params ['x]} {:params ['_ '_]}]}
+               (fns/parse-fn-decl* '(:defn name "blaa" ([=>] [x]) ([=>] [_ _])))))
+         ))
+
+     (deftest t-parse-arg
+       (testing "single arity"
+         (is (= [['String] 'String] (fns/parse-args+ '[String => String])))
+         (is (= [['String 'types/Int] 'String] (fns/parse-args+ '[String types/Int => String])))
+         (is (= [[] 'types/Int] (fns/parse-args+ '[=> types/Int])))
+         (is (= [["test"] 'Boolean] (fns/parse-args+ '["test" => Boolean])))
+         (is (thrown? java.lang.AssertionError (fns/parse-args+ '[String =>])))
+         (is (thrown? java.lang.AssertionError (fns/parse-args+ '[String types/Int])))
+         (is (thrown? java.lang.AssertionError (fns/parse-args+ '[=>]))))
+       )
+
+     (deftest t-defn
+       ;; TODO varargs?????????????
+       )
+     ))
 
 (deftest t-fn-fn-checking
   ;; testing higher-order arguments and return types

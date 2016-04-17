@@ -154,7 +154,17 @@
         (check [String] ["hi" :there "Billy"])))
   (is (= nil (check [[Keyword String]] [[:name "Billy"] [:name "Joey"]])))
   (is (= [nil [nil (list 'not (list 'instance? 'String :Joey))]]
-        (check [[Keyword String]] [[:name "Billy"] [:name :Joey]]))))
+        (check [[Keyword String]] [[:name "Billy"] [:name :Joey]])))
+
+  ;; TODO error message is not clear enough
+  (is (= nil (check [(Coll) '=> (Coll)] [ [1] nil [2]])))
+
+  )
+
+;; TODO figure out way to check all the different collections, seqs
+;; and what not. (cons) and (seq) for example return whatnot using [a
+;; b c] as not good idea, as the way to strictly check for vector
+;; would be gone
 
 (deftest t-Lists
   (is (= (list 'String) (display-type (list String))))
@@ -163,6 +173,10 @@
   (is (= (list 'not (list 'list? #{})) (check (list) #{})))
   (is (= nil (check (list String) (list))))
   (is (= nil (check (list String) (list "hi"))))
+
+  ;; TODO improve error msg
+  (is (valid? (list (Coll) '=> (Coll)) '([1] nil [2])))
+
   (is (= (list (list 'not (list 'instance? 'String :hi)))
         (check (list String) (list :hi))))
   (is (= nil (check (list String) (list "hi" "there" "Billy"))))

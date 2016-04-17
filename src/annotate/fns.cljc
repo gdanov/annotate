@@ -2,13 +2,12 @@
   "Type annotations/checking for defn and fn forms."
   #?(:clj (:use [annotate types core util])
      :cljs (:require [annotate.types]
+                     [annotate.core :refer [check*]]
                      [annotate.util
                       :refer [remove-amp parse-doc-attr-map parse-arglist
                               remove-pre-post quote-special typecheck?
                               parse-fn-args]]))
   #?(:cljs (:require-macros [annotate.core :refer [ann]])))
-
-
 
 #?(:clj
    (do
@@ -71,19 +70,98 @@
             (assert-arity-match '~n (lookup-arglists ~n) '~t)
             (var ~n))))
 
+     (defrecord fn-body [contract params prepost-map body])
+
+     (defrecord fn-def [name doc-string attr-map bodies])
+
+     (defn has-pre-post? [body-src]
+       ;; (defn x [] {:pre ...}) causes pre not to be respected, but
+       ;; rather the map is the result
+       (and (< 2 (count body-src)) (map? (nth body-src 2))))
+
+     (defn is-arg-contract? [form]
+       (some (partial = '=>) form))
+
      (defn parse-args+
        "given raw arglist spec provide vector of one spec per
-  arity. shape of result: [[[<param>] <return>]] returns the symbols
-  it was given, no lookup/deref"
+  arity. shape of result: [[<param>] <return>] returns the symbols
+  it was given, no lookup/deref. DOES NOT support the original multi-arity syntax"
        [args]
        (condp apply [args]
+         ;; TODO deprecate
          list?   (mapv (comp first parse-args+) args)
          vector? (let [inp (partition-by #(= '=> %) args)
                        inp (if (= 2 (count inp)) (cons '() inp) inp)]
-                   (assert (and (= 3 (count inp))
-                             (= '(=>) (nth inp 1)))
-                     (str "incorrect argspec:" args))
-                   [[(into [] (first inp)) (first (last inp))]])))
+                   ;; TODO make this work
+                   #_(assert* [(Coll) (cons '=> nil) (Coll)] (into [] inp)
+                       "invalid contract:" args)
+                   (assert (and (= 3(count inp)) (= '(=>) (nth inp 1)))
+                     (str "invalid contract:" args))
+                   [(into [] (first inp)) (first (last inp))])))
+
+     (defn parse-fn-body
+       "parses one arity body. expects:
+  ([<contract>] [<params>] {:pre }? .+)"
+       [body-src]
+       ;; TODO use check* currently impossible due to lack of support
+       ;; for lists, optional elements (pre-post) and & rest
+       #_(check* (str "function arity def '"(pr-str body-src))
+           [(I [Any] (Pred is-arg-contract?))
+            [Any]
+            {}
+            Any]
+           (into [] body-src))
+       (assert (>= (count body-src) 2) (str "body too-short" (truncate body-src)))
+       (assert* (I Vec (Pred is-arg-contract?)) (first body-src)
+         "can't validate params contract definition")
+       (assert* Vec (nth body-src 1) "can't validate params vector")
+       (->fn-body
+         (first body-src)
+         (nth body-src 1)
+         (when (has-pre-post? body-src) (nth body-src 2))
+         (nthrest body-src (if (has-pre-post? body-src) 3 2))))
+
+     (defn parse-fn-decl*
+       "parses function declaration. does no checks and does not parse the contract"
+       [fn-src]
+       (-> [fn-src (map->fn-def {})]
+         ((fn get-type [[fn-src res]]
+            (condp = (first fn-src)
+              :fn [(rest fn-src) (assoc res :anonymous true :name (gensym))]
+              :defn [(rest fn-src) res])))
+         ((fn get-name [[fn-src res]]
+            (assert (or (:anonymous res)
+                      (and (nil? (:anonymous res)) (symbol? (first fn-src))))
+              "defn needs a name")
+            (if (symbol? (first fn-src))
+              [(rest fn-src) (assoc res :name (first fn-src))]
+              [fn-src res])))
+         ((fn get-doc-string [[fn-src res]]
+            (if (and (not (:anonymous res))
+                  (string? (first fn-src)))
+              [(rest fn-src) (assoc res :doc-string (first fn-src))]
+              [fn-src res])))
+         ;; TODO meta is ignored atm
+         ((fn get-body* [[fn-src res]]
+            (assoc res :bodies
+              (cond
+                (every? list? fn-src) (mapv parse-fn-body fn-src)
+                (vector? (first fn-src)) [(parse-fn-body fn-src)]
+                :else (assert false (str "can't parse params:" (truncate fn-src)))))))))
+
+     (defn drop-& [params]
+       (filter #(not= '& %) params))
+
+     (defn add-checking*
+       [fn-name contract params body check-cond-form]
+       (let [[inp-contract out-contract] (parse-args+ contract)]
+         (assert (= (count inp-contract) (count (drop-& params)))
+           (str "contract arity does not match parameter count" contract params))
+         `((when ~check-cond-form
+             (check* (str "inputs for " ~fn-name) ~@(interleave inp-contract (drop-& params))))
+           (let [result# (do ~@body)]
+             (when ~check-cond-form (check* (str "output of " ~fn-name) ~out-contract result#))
+             result#))))
 
      (defn- add-contract
        "adds the contract as meta data on the fn value. the contract
@@ -91,6 +169,15 @@
        [fn-decl contract]
        (println "C:" contract)
        `(vary-meta ~fn-decl assoc ~:annotate.types/contract ~contract))
+
+     (defmacro fnvv [& form]
+       (let [fn-def (parse-fn-decl* (cons :fn form))]
+         `(fn ~(:name fn-def)
+            ~@(map (fn [%] `(~(:params %)
+                             ;; add-checking
+                             ~@(add-checking* (:name fn-def) (:contract %) (:params %)
+                                 (:body %) true)))
+                (:bodies fn-def)))))
 
      (defn- fn-internal
        "Define a function with type checking, add type annotation, and
@@ -105,8 +192,11 @@
                    (map (fn [[t [params & body]]]
                           (add-checking fn-name (parse-arglist t) params body cond-sym)))))]
          (if n
-           (add-contract `(fn ~n ~@b) (parse-args+ t))
-           (add-contract `(fn ~@b) (parse-args+ t)))))
+           `(fn ~n ~@b)
+           `(fn ~@b)
+           ;;(add-contract `(fn ~n ~@b) (parse-args+ t))
+           ;;(add-contract `(fn ~@b) (parse-args+ t))
+           )))
 
      (defmacro defn'
        "Define a function, passing the type annotation after the name of the

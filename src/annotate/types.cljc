@@ -17,7 +17,7 @@
        "Defines a type determined by the given predicate fn. It’s values are
   the set of values for which the predicate is truthy."
        [f]
-       `(annotate.types/PredicateType. ~(if (symbol? f)
+       `(annotate.types/->PredicateType ~(if (symbol? f)
                                           `(fq-ns (var ~f))
                                           `(quote ~f))
           ~f))
@@ -734,7 +734,7 @@
      (ns-unmap *ns* '->NothingType)
      (ns-unmap *ns* '->OptionalKey)
      (ns-unmap *ns* '->PairsType)
-     (ns-unmap *ns* '->PredicateType)
+     ;;(ns-unmap *ns* '->PredicateType)
      (ns-unmap *ns* '->ProtocolType)
      (ns-unmap *ns* '->RequiredKey)
      (ns-unmap *ns* '->SubsetType)
